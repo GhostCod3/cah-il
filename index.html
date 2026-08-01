@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <!--
-Content revision v32.29:
-- Keeps the main floating action as "new round" on every desktop layout
-- Retains the useful down-arrow navigation only on narrow mobile layouts
-- Restarts the central refresh animation reliably on every desktop click
-- Makes full-round and individual-card transitions visible on desktop
-- Uses slightly longer desktop timings while preserving the mobile timings
-- Preserves all cards, migrations, menu layout, metadata and typography
+Content revision v32.30:
+- Converts the site into an installable Progressive Web App
+- Adds a linked web app manifest with standalone display behavior
+- Adds a service worker for offline loading and asset caching
+- Adds a native install button that appears when the browser permits installation
+- Adds Android-ready 192px and maskable 512px icons
+- Preserves all cards, migrations, menu layout, metadata, typography and animations
 - UI-only release: internal deck content version remains 33.6
 - Final size with every expansion active remains 256 black / 784 white / 1040 total
 -->
@@ -29,8 +29,8 @@ Content revision v32.29:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.29" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.29" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.30" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.30" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -40,10 +40,15 @@ Content revision v32.29:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.29" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.30" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1247,6 +1252,22 @@ Content revision v32.29:
       color: #111;
     }
 
+    .install-app-action[hidden] {
+      display: none !important;
+    }
+
+    .install-app-action:disabled {
+      cursor: wait;
+      opacity: .72;
+    }
+
+    .install-app-state {
+      color: #bdbdbd;
+      font-size: .82rem;
+      font-weight: 550;
+      white-space: nowrap;
+    }
+
     .expansion-pack-list {
       display: grid;
       gap: 8px;
@@ -2385,6 +2406,16 @@ Content revision v32.29:
             </span>
             <span id="wakeLockState" class="toggle-state">כבוי</span>
           </button>
+
+          <button
+            id="installAppButton"
+            class="settings-action settings-action-split install-app-action"
+            type="button"
+            hidden
+          >
+            <span class="settings-action-title">התקנת המשחק</span>
+            <span id="installAppState" class="install-app-state">למסך הבית</span>
+          </button>
         </section>
 
         <section class="settings-section" aria-labelledby="deckMenuSection">
@@ -2483,8 +2514,8 @@ Content revision v32.29:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 32.29 · 1,040 קלפים בחפיסה המלאה</strong><br>
-        ההתקדמות והעריכות נשמרות במכשיר בלבד
+        <strong>גרסה 32.30 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
   </div>
@@ -4471,11 +4502,14 @@ Content revision v32.29:
     const wakeLockToggle = document.getElementById("wakeLockToggle");
     const wakeLockState = document.getElementById("wakeLockState");
     const wakeLockDescription = document.getElementById("wakeLockDescription");
+    const installAppButton = document.getElementById("installAppButton");
+    const installAppState = document.getElementById("installAppState");
 
     let currentListType = "black";
     let visibleListCards = [];
     let wakeLockSentinel = null;
     let wakeLockWanted = false;
+    let deferredInstallPrompt = null;
 
     const modalReturnFocus = new WeakMap();
     const modalRootSelector = [
@@ -4713,6 +4747,81 @@ Content revision v32.29:
         }
       }
     }
+
+    function isInstalledPwa() {
+      return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true
+      );
+    }
+
+    function updateInstallAppUi() {
+      const installed = isInstalledPwa();
+
+      if (installed) {
+        installAppButton.hidden = true;
+        installAppButton.disabled = false;
+        installAppState.textContent = "מותקן";
+        return;
+      }
+
+      const available = Boolean(deferredInstallPrompt);
+      installAppButton.hidden = !available;
+      installAppButton.disabled = !available;
+      installAppState.textContent = available
+        ? "למסך הבית"
+        : "לא זמין";
+    }
+
+    async function promptAppInstallation() {
+      if (!deferredInstallPrompt) {
+        updateInstallAppUi();
+        return;
+      }
+
+      const promptEvent = deferredInstallPrompt;
+      deferredInstallPrompt = null;
+      installAppButton.disabled = true;
+      installAppState.textContent = "פותח התקנה";
+
+      try {
+        await promptEvent.prompt();
+        const choice = await promptEvent.userChoice;
+
+        if (choice.outcome === "accepted") {
+          closeSettings();
+          setStatus("המשחק נוסף למסך הבית", 2600);
+        } else {
+          setStatus("ההתקנה בוטלה", 1800);
+        }
+      } catch (error) {
+        console.warn("PWA install prompt failed", error);
+        setStatus("ההתקנה אינה זמינה כרגע", 2200);
+      } finally {
+        installAppButton.disabled = false;
+        updateInstallAppUi();
+      }
+    }
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      updateInstallAppUi();
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      updateInstallAppUi();
+      setStatus("המשחק הותקן בהצלחה", 2600);
+    });
+
+    const standaloneMediaQuery =
+      window.matchMedia("(display-mode: standalone)");
+
+    standaloneMediaQuery.addEventListener?.(
+      "change",
+      updateInstallAppUi
+    );
 
     function wakeLockSupportStatus() {
       if (!window.isSecureContext) return "insecure";
@@ -5055,6 +5164,11 @@ Content revision v32.29:
         await acquireWakeLock();
       }
     });
+
+    installAppButton.addEventListener(
+      "click",
+      promptAppInstallation
+    );
 
     document.addEventListener("visibilitychange", async () => {
       if (
@@ -6069,12 +6183,31 @@ Content revision v32.29:
       });
     });
 
+    if ("serviceWorker" in navigator && window.isSecureContext) {
+      window.addEventListener("load", async () => {
+        try {
+          const registration = await navigator.serviceWorker.register(
+            "./sw.js",
+            {
+              scope: "./",
+              updateViaCache: "none"
+            }
+          );
+
+          registration.update();
+        } catch (error) {
+          console.warn("Service worker registration failed", error);
+        }
+      });
+    }
+
     updateEditionBranding();
     rebuildActiveDeck();
 
     const restored=loadState();
     renderDeckLists();
     updateWakeLockUi();
+    updateInstallAppUi();
     if(restored)renderCurrent();else{resetOrders();showRandomBlack();}
 
     if (isMobileGameFullscreen()) {
