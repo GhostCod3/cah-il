@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <!--
-Content revision v32.26:
-- Uses absolute HTTPS Open Graph and Twitter image URLs for WhatsApp previews
-- Adds canonical and og:url metadata for the published GitHub Pages address
-- Adds secure image URL, MIME type and a cache-busting image version
-- Packages the deployable HTML as index.html for direct GitHub Pages upload
+Content revision v32.27:
+- Loads Noto Sans Hebrew as the single web font on Android and desktop
+- Removes the platform-dependent Arial-first font stack
+- Applies the same typeface to cards, menus, buttons, fields and editor text
+- Uses the real 900 font weight instead of a synthetic 950 weight
 - Preserves all cards, migrations, menu layout, metadata and animations
 - UI-only release: internal deck content version remains 33.6
 - Final size with every expansion active remains 256 black / 784 white / 1040 total
@@ -28,8 +28,8 @@ Content revision v32.26:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.26" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.26" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.27" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.27" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -39,10 +39,17 @@ Content revision v32.26:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.26" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.27" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@100..900&display=swap"
+  />
 
   <title>קלפים נגד האנושות — מהדורת 2026 בלי ברקסים</title>
   <style>
@@ -61,7 +68,10 @@ Content revision v32.26:
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Arial, "Noto Sans Hebrew", sans-serif;
+      font-family: "Noto Sans Hebrew", Arial, sans-serif;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
       background: radial-gradient(circle at top, #242424 0%, #111 42%, #090909 100%);
       color: var(--text);
       display: grid;
@@ -188,7 +198,7 @@ Content revision v32.26:
       border-radius: 12px;
       border: 1px solid #3a3a3a;
       resize: vertical;
-      font: 600 .98rem/1.55 Arial, "Noto Sans Hebrew", sans-serif;
+      font: 600 .98rem/1.55 "Noto Sans Hebrew", Arial, sans-serif;
       direction: rtl;
       text-align: right;
       background: #101010;
@@ -1927,7 +1937,7 @@ Content revision v32.26:
       place-items: center;
       color: #f5f5f1;
       font-size: 1.45rem;
-      font-weight: 950;
+      font-weight: 900;
       letter-spacing: -.04em;
       transform: rotate(-5deg);
     }
@@ -1956,7 +1966,7 @@ Content revision v32.26:
       margin: 0 0 12px;
       color: #f5f5f1;
       font-size: clamp(.92rem, 3vw, 1.05rem);
-      font-weight: 950;
+      font-weight: 900;
       letter-spacing: -.02em;
       text-transform: none;
     }
@@ -2374,7 +2384,7 @@ Content revision v32.26:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 32.26 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 32.27 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד
       </footer>
     </section>
