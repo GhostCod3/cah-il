@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <!--
-Content revision v32.31:
-- Restores reliable browser fullscreen entry from the content-warning confirmation
-- Requests fullscreen before vibration or any other user-activation-sensitive action
-- Centralizes standard and WebKit-prefixed fullscreen handling
-- Keeps standalone PWA mode on the compact fullscreen game layout
-- Adds a visible fallback cue when a browser blocks fullscreen
-- Updates the offline cache to v32.31
-- Preserves all cards, migrations, menu layout, metadata, typography and animations
+Content revision v32.32:
+- Moves browser fullscreen entry to the tap's pointerup event on touch devices
+- Keeps keyboard activation through the normal click event
+- Requests fullscreen on the body element with standard and legacy fallbacks
+- Detects blocked or embedded browser contexts and displays a precise explanation
+- Applies the same direct-gesture flow to the floating fullscreen control
+- Updates the offline cache to v32.32
+- Preserves all cards, migrations, PWA installation, menu layout and animations
 - UI-only release: internal deck content version remains 33.6
 - Final size with every expansion active remains 256 black / 784 white / 1040 total
 -->
@@ -30,8 +30,8 @@ Content revision v32.31:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.31" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.31" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.32" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.32" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -41,7 +41,7 @@ Content revision v32.31:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.31" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.32" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2541,7 +2541,7 @@ Content revision v32.31:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 32.31 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 32.32 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5245,33 +5245,87 @@ Content revision v32.31:
       );
     }
 
+    function fullscreenCapability() {
+      const body = document.body;
+      const root = document.documentElement;
+
+      const candidates = [
+        [body, body?.requestFullscreen],
+        [root, root?.requestFullscreen],
+        [body, body?.webkitRequestFullscreen],
+        [root, root?.webkitRequestFullscreen],
+        [body, body?.webkitRequestFullScreen],
+        [root, root?.webkitRequestFullScreen]
+      ];
+
+      const supported = candidates.find(
+        ([element, method]) =>
+          element && typeof method === "function"
+      );
+
+      const explicitlyDisabled =
+        document.fullscreenEnabled === false ||
+        document.webkitFullscreenEnabled === false;
+
+      return {
+        supported,
+        explicitlyDisabled,
+        embedded: window.self !== window.top,
+        userActive:
+          navigator.userActivation?.isActive !== false
+      };
+    }
+
     function requestGameFullscreen() {
       if (gameFullscreenElement()) {
-        return Promise.resolve(true);
+        return Promise.resolve({
+          ok: true,
+          reason: "already-fullscreen"
+        });
       }
 
-      const root = document.documentElement;
-      const request =
-        root.requestFullscreen ||
-        root.webkitRequestFullscreen;
+      const capability = fullscreenCapability();
 
-      if (typeof request !== "function") {
-        return Promise.resolve(false);
+      if (capability.explicitlyDisabled) {
+        return Promise.resolve({
+          ok: false,
+          reason: "disabled",
+          capability
+        });
       }
+
+      if (!capability.supported) {
+        return Promise.resolve({
+          ok: false,
+          reason: "unsupported",
+          capability
+        });
+      }
+
+      const [element, method] = capability.supported;
 
       try {
-        // Keep this as the first activation-sensitive action.
-        const result = request.call(root);
+        // The method call itself stays synchronous inside the gesture.
+        const result = method.call(element);
 
         return Promise.resolve(result)
-          .then(() => true)
-          .catch((error) => {
-            console.warn("Fullscreen request was rejected", error);
-            return false;
-          });
+          .then(() => ({
+            ok: true,
+            reason: "entered"
+          }))
+          .catch((error) => ({
+            ok: false,
+            reason: "rejected",
+            error,
+            capability
+          }));
       } catch (error) {
-        console.warn("Fullscreen request failed", error);
-        return Promise.resolve(false);
+        return Promise.resolve({
+          ok: false,
+          reason: "threw",
+          error,
+          capability
+        });
       }
     }
 
@@ -5281,50 +5335,117 @@ Content revision v32.31:
         document.webkitExitFullscreen;
 
       if (typeof exit !== "function") {
-        return Promise.resolve(false);
+        return Promise.resolve({
+          ok: false,
+          reason: "unsupported"
+        });
       }
 
       try {
         const result = exit.call(document);
 
         return Promise.resolve(result)
-          .then(() => true)
-          .catch((error) => {
-            console.warn("Fullscreen exit was rejected", error);
-            return false;
-          });
+          .then(() => ({
+            ok: true,
+            reason: "exited"
+          }))
+          .catch((error) => ({
+            ok: false,
+            reason: "rejected",
+            error
+          }));
       } catch (error) {
-        console.warn("Fullscreen exit failed", error);
-        return Promise.resolve(false);
+        return Promise.resolve({
+          ok: false,
+          reason: "threw",
+          error
+        });
       }
     }
 
-    async function acceptContentWarning() {
-      // Request fullscreen before vibration so the click's transient
-      // user activation remains available to the Fullscreen API.
+    function fullscreenFailureMessage(result) {
+      if (result?.capability?.embedded) {
+        return (
+          "החלון הפנימי לא מאפשר מסך מלא — " +
+          "פתח את הקישור ישירות ב-Chrome"
+        );
+      }
+
+      if (
+        result?.reason === "disabled" ||
+        result?.reason === "unsupported"
+      ) {
+        return (
+          "הדפדפן הנוכחי לא מאפשר מסך מלא — " +
+          "פתח את הקישור ישירות ב-Chrome"
+        );
+      }
+
+      if (result?.capability?.userActive === false) {
+        return (
+          "הדפדפן לא זיהה את הלחיצה — " +
+          "נסה שוב דרך סמל המסך המלא"
+        );
+      }
+
+      return (
+        "הדפדפן חסם מסך מלא — " +
+        "נסה שוב דרך הסמל בתחתית"
+      );
+    }
+
+    function showFullscreenFailure(result) {
+      console.warn("Fullscreen request failed", {
+        reason: result?.reason,
+        errorName: result?.error?.name,
+        errorMessage: result?.error?.message,
+        fullscreenEnabled: document.fullscreenEnabled,
+        webkitFullscreenEnabled:
+          document.webkitFullscreenEnabled,
+        userActive:
+          navigator.userActivation?.isActive,
+        embedded: window.self !== window.top,
+        userAgent: navigator.userAgent
+      });
+
+      fullscreenButton.classList.add("needs-attention");
+      setStatus(fullscreenFailureMessage(result), 5200);
+
+      setTimeout(() => {
+        fullscreenButton.classList.remove("needs-attention");
+      }, 4200);
+    }
+
+    let contentGateAcceptanceStarted = false;
+
+    function acceptContentWarningFromGesture(event) {
+      if (contentGateAcceptanceStarted) {
+        return;
+      }
+
+      contentGateAcceptanceStarted = true;
+
+      if (event?.type === "pointerup") {
+        event.preventDefault();
+      }
+
+      // Do not await before calling the gated API.
       const fullscreenRequest = requestGameFullscreen();
 
       closeContentGate();
 
-      const enteredFullscreen = await fullscreenRequest;
-      haptic(18);
+      fullscreenRequest.then((result) => {
+        haptic(18);
 
-      const fullscreenLike =
-        enteredFullscreen ||
-        Boolean(gameFullscreenElement()) ||
-        isInstalledPwa();
+        const fullscreenLike =
+          result.ok ||
+          Boolean(gameFullscreenElement()) ||
+          isInstalledPwa();
 
-      if (!fullscreenLike) {
-        fullscreenButton.classList.add("needs-attention");
-        setStatus(
-          "הדפדפן חסם מסך מלא — לחץ על סמל המסך המלא בתחתית",
-          4200
-        );
-
-        setTimeout(() => {
-          fullscreenButton.classList.remove("needs-attention");
-        }, 3400);
-      }
+        if (!fullscreenLike) {
+          showFullscreenFailure(result);
+        }
+      });
     }
 
     setGameBackgroundInert(true);
@@ -5334,8 +5455,19 @@ Content revision v32.31:
     });
 
     contentGateAccept.addEventListener(
+      "pointerup",
+      (event) => {
+        if (event.pointerType === "touch") {
+          acceptContentWarningFromGesture(event);
+        }
+      }
+    );
+
+    contentGateAccept.addEventListener(
       "click",
-      acceptContentWarning
+      (event) => {
+        acceptContentWarningFromGesture(event);
+      }
     );
 
     contentGateDecline.addEventListener("click", () => {
@@ -5386,26 +5518,52 @@ Content revision v32.31:
         gameBoard.classList.remove("round-entering");
       }, 260);
     });
-    fullscreenButton.addEventListener("click", async () => {
+    let fullscreenButtonGestureStarted = false;
+
+    function runFullscreenButtonGesture(event) {
+      if (fullscreenButtonGestureStarted) {
+        return;
+      }
+
+      fullscreenButtonGestureStarted = true;
+
+      if (event?.type === "pointerup") {
+        event.preventDefault();
+      }
+
       const active = Boolean(gameFullscreenElement());
       const fullscreenAction = active
         ? exitGameFullscreen()
         : requestGameFullscreen();
 
-      // Start the gated fullscreen action before vibration.
-      haptic(12);
+      fullscreenAction.then((result) => {
+        haptic(12);
 
-      const succeeded = await fullscreenAction;
-
-      if (!succeeded && !isInstalledPwa()) {
-        fullscreenButton.classList.add("needs-attention");
-        setStatus("הדפדפן חסם מסך מלא", 2600);
+        if (!result.ok && !isInstalledPwa()) {
+          showFullscreenFailure(result);
+        }
 
         setTimeout(() => {
-          fullscreenButton.classList.remove("needs-attention");
-        }, 2200);
+          fullscreenButtonGestureStarted = false;
+        }, 350);
+      });
+    }
+
+    fullscreenButton.addEventListener(
+      "pointerup",
+      (event) => {
+        if (event.pointerType === "touch") {
+          runFullscreenButtonGesture(event);
+        }
       }
-    });
+    );
+
+    fullscreenButton.addEventListener(
+      "click",
+      (event) => {
+        runFullscreenButtonGesture(event);
+      }
+    );
 
     async function handleGameFullscreenChange() {
       const active = Boolean(gameFullscreenElement());
