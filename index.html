@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <!--
-Content revision v32.30:
-- Converts the site into an installable Progressive Web App
-- Adds a linked web app manifest with standalone display behavior
-- Adds a service worker for offline loading and asset caching
-- Adds a native install button that appears when the browser permits installation
-- Adds Android-ready 192px and maskable 512px icons
+Content revision v32.31:
+- Restores reliable browser fullscreen entry from the content-warning confirmation
+- Requests fullscreen before vibration or any other user-activation-sensitive action
+- Centralizes standard and WebKit-prefixed fullscreen handling
+- Keeps standalone PWA mode on the compact fullscreen game layout
+- Adds a visible fallback cue when a browser blocks fullscreen
+- Updates the offline cache to v32.31
 - Preserves all cards, migrations, menu layout, metadata, typography and animations
 - UI-only release: internal deck content version remains 33.6
 - Final size with every expansion active remains 256 black / 784 white / 1040 total
@@ -29,8 +30,8 @@ Content revision v32.30:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.30" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.30" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.31" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.31" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -40,7 +41,7 @@ Content revision v32.30:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.30" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.31" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2199,6 +2200,32 @@ Content revision v32.30:
       }
     }
 
+
+    .fullscreen-control.needs-attention {
+      animation: fullscreenAttention 1.05s ease-in-out 3;
+    }
+
+    @keyframes fullscreenAttention {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      }
+      50% {
+        transform: scale(1.12);
+        box-shadow:
+          0 0 0 7px rgba(247,247,243,.12),
+          0 14px 34px rgba(0,0,0,.42);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .fullscreen-control.needs-attention {
+        animation: none;
+        outline: 3px solid rgba(247,247,243,.72);
+        outline-offset: 4px;
+      }
+    }
+
 </style>
 </head>
 <body class="content-gate-open">
@@ -2514,7 +2541,7 @@ Content revision v32.30:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 32.30 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 32.31 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5210,24 +5237,93 @@ Content revision v32.30:
       setGameBackgroundInert(false);
     }
 
-    async function acceptContentWarning() {
-      haptic(18);
+    function gameFullscreenElement() {
+      return (
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        null
+      );
+    }
 
-      const fullscreenRequest =
-        !document.fullscreenElement &&
-        typeof document.documentElement.requestFullscreen === "function"
-          ? document.documentElement.requestFullscreen()
-          : Promise.resolve();
+    function requestGameFullscreen() {
+      if (gameFullscreenElement()) {
+        return Promise.resolve(true);
+      }
+
+      const root = document.documentElement;
+      const request =
+        root.requestFullscreen ||
+        root.webkitRequestFullscreen;
+
+      if (typeof request !== "function") {
+        return Promise.resolve(false);
+      }
+
+      try {
+        // Keep this as the first activation-sensitive action.
+        const result = request.call(root);
+
+        return Promise.resolve(result)
+          .then(() => true)
+          .catch((error) => {
+            console.warn("Fullscreen request was rejected", error);
+            return false;
+          });
+      } catch (error) {
+        console.warn("Fullscreen request failed", error);
+        return Promise.resolve(false);
+      }
+    }
+
+    function exitGameFullscreen() {
+      const exit =
+        document.exitFullscreen ||
+        document.webkitExitFullscreen;
+
+      if (typeof exit !== "function") {
+        return Promise.resolve(false);
+      }
+
+      try {
+        const result = exit.call(document);
+
+        return Promise.resolve(result)
+          .then(() => true)
+          .catch((error) => {
+            console.warn("Fullscreen exit was rejected", error);
+            return false;
+          });
+      } catch (error) {
+        console.warn("Fullscreen exit failed", error);
+        return Promise.resolve(false);
+      }
+    }
+
+    async function acceptContentWarning() {
+      // Request fullscreen before vibration so the click's transient
+      // user activation remains available to the Fullscreen API.
+      const fullscreenRequest = requestGameFullscreen();
 
       closeContentGate();
 
-      try {
-        await fullscreenRequest;
-      } catch {
+      const enteredFullscreen = await fullscreenRequest;
+      haptic(18);
+
+      const fullscreenLike =
+        enteredFullscreen ||
+        Boolean(gameFullscreenElement()) ||
+        isInstalledPwa();
+
+      if (!fullscreenLike) {
+        fullscreenButton.classList.add("needs-attention");
         setStatus(
-          "הדפדפן חסם מסך מלא, אבל המשחק נפתח כרגיל",
-          3000
+          "הדפדפן חסם מסך מלא — לחץ על סמל המסך המלא בתחתית",
+          4200
         );
+
+        setTimeout(() => {
+          fullscreenButton.classList.remove("needs-attention");
+        }, 3400);
       }
     }
 
@@ -5290,9 +5386,29 @@ Content revision v32.30:
         gameBoard.classList.remove("round-entering");
       }, 260);
     });
-    fullscreenButton.addEventListener("click",async()=>{try{if(!document.fullscreenElement){await document.documentElement.requestFullscreen();}else{await document.exitFullscreen();}}catch{setStatus("הדפדפן חסם מסך מלא");}});
-    document.addEventListener("fullscreenchange", async () => {
-      const active = Boolean(document.fullscreenElement);
+    fullscreenButton.addEventListener("click", async () => {
+      const active = Boolean(gameFullscreenElement());
+      const fullscreenAction = active
+        ? exitGameFullscreen()
+        : requestGameFullscreen();
+
+      // Start the gated fullscreen action before vibration.
+      haptic(12);
+
+      const succeeded = await fullscreenAction;
+
+      if (!succeeded && !isInstalledPwa()) {
+        fullscreenButton.classList.add("needs-attention");
+        setStatus("הדפדפן חסם מסך מלא", 2600);
+
+        setTimeout(() => {
+          fullscreenButton.classList.remove("needs-attention");
+        }, 2200);
+      }
+    });
+
+    async function handleGameFullscreenChange() {
+      const active = Boolean(gameFullscreenElement());
 
       fullscreenButton.setAttribute(
         "aria-label",
@@ -5305,17 +5421,30 @@ Content revision v32.30:
       );
 
       fullscreenButton.classList.toggle("is-active", active);
+      fullscreenButton.classList.remove("needs-attention");
 
       await configureFullscreenLayout({
         scrollToStart: true
       });
 
-      if (!active) {
+      if (!active && !isInstalledPwa()) {
         await configureAdaptiveLayout({
           preserveAnchor: false
         });
       }
-    });
+    }
+
+    document.addEventListener(
+      "fullscreenchange",
+      handleGameFullscreenChange
+    );
+
+    if ("onwebkitfullscreenchange" in document) {
+      document.addEventListener(
+        "webkitfullscreenchange",
+        handleGameFullscreenChange
+      );
+    }
     function openEditor() {
       blackEditor.value = baseBlackCards
         .map(renderEditionYear)
@@ -5533,7 +5662,11 @@ Content revision v32.30:
     let uiActivityTimer;
 
     function isMobileAdaptiveLayout() {
-      return !document.fullscreenElement && window.innerWidth <= 760;
+      return (
+        !gameFullscreenElement() &&
+        !isInstalledPwa() &&
+        window.innerWidth <= 760
+      );
     }
 
     function isDesktopGameLayout() {
@@ -5812,7 +5945,10 @@ Content revision v32.30:
     }
 
     function isMobileGameFullscreen() {
-      return Boolean(document.fullscreenElement) && window.innerWidth <= 760;
+      return (
+        Boolean(gameFullscreenElement()) ||
+        isInstalledPwa()
+      ) && window.innerWidth <= 760;
     }
 
     function visibleGameCards() {
@@ -6208,6 +6344,14 @@ Content revision v32.30:
     renderDeckLists();
     updateWakeLockUi();
     updateInstallAppUi();
+
+    if (isInstalledPwa()) {
+      requestAnimationFrame(() => {
+        configureFullscreenLayout({
+          scrollToStart: true
+        });
+      });
+    }
     if(restored)renderCurrent();else{resetOrders();showRandomBlack();}
 
     if (isMobileGameFullscreen()) {
