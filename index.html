@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <!--
-Content revision v32.27:
-- Loads Noto Sans Hebrew as the single web font on Android and desktop
-- Removes the platform-dependent Arial-first font stack
-- Applies the same typeface to cards, menus, buttons, fields and editor text
-- Uses the real 900 font weight instead of a synthetic 950 weight
-- Preserves all cards, migrations, menu layout, metadata and animations
+Content revision v32.29:
+- Keeps the main floating action as "new round" on every desktop layout
+- Retains the useful down-arrow navigation only on narrow mobile layouts
+- Restarts the central refresh animation reliably on every desktop click
+- Makes full-round and individual-card transitions visible on desktop
+- Uses slightly longer desktop timings while preserving the mobile timings
+- Preserves all cards, migrations, menu layout, metadata and typography
 - UI-only release: internal deck content version remains 33.6
 - Final size with every expansion active remains 256 black / 784 white / 1040 total
 -->
@@ -28,8 +29,8 @@ Content revision v32.27:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.27" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.27" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.29" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.29" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -39,7 +40,7 @@ Content revision v32.27:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.27" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.29" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -107,13 +108,13 @@ Content revision v32.27:
     .card.white { background: var(--white-card); color: var(--white-card-text); border: 1px solid #d6d6d0; }
     .card-text {
       font-size: clamp(1.45rem, 3.4vw, 2.5rem);
-      font-weight: 800;
+      font-weight: 750;
       line-height: 1.22;
       letter-spacing: -0.02em;
       white-space: pre-line;
       overflow-wrap: anywhere;
     }
-    .brand { display: flex; align-items: flex-end; gap: 8px; font-weight: 700; font-size: .9rem; opacity: .92; }
+    .brand { display: flex; align-items: flex-end; gap: 8px; font-weight: 650; font-size: .9rem; opacity: .92; }
     .brand-mark {
       --brand-dot-size: 6px;
       width: 18px;
@@ -446,7 +447,7 @@ Content revision v32.27:
     .choose-two {
       margin-top: auto;
       margin-bottom: 10px;
-      font-weight: 900;
+      font-weight: 700;
       font-size: 1rem;
       letter-spacing: .02em;
     }
@@ -885,6 +886,7 @@ Content revision v32.27:
     .settings-heading h2 {
       margin: 0;
       font-size: 1.35rem;
+      font-weight: 800;
     }
 
     .settings-close {
@@ -912,6 +914,7 @@ Content revision v32.27:
       background: #242424;
       color: #fff;
       border: 1px solid #3a3a3a;
+      font-weight: 700;
     }
 
     @media (max-width: 760px) {
@@ -1089,7 +1092,7 @@ Content revision v32.27:
       margin: 10px 4px 1px;
       color: #9d9d9d;
       font-size: .78rem;
-      font-weight: 900;
+      font-weight: 600;
       letter-spacing: .025em;
     }
 
@@ -1110,14 +1113,14 @@ Content revision v32.27:
 
     .settings-action-title {
       color: #fff;
-      font-weight: 850;
+      font-weight: 700;
       line-height: 1.3;
     }
 
     .settings-action-meta {
       color: #aaa;
       font-size: .76rem;
-      font-weight: 500;
+      font-weight: 400;
       line-height: 1.35;
     }
 
@@ -1128,6 +1131,7 @@ Content revision v32.27:
       gap: 9px;
       color: #bdbdbd;
       font-size: .82rem;
+      font-weight: 550;
       white-space: nowrap;
     }
 
@@ -1169,7 +1173,7 @@ Content revision v32.27:
 
     .settings-menu-footer strong {
       color: #aaa;
-      font-weight: 750;
+      font-weight: 600;
     }
 
     .settings-action-split {
@@ -1182,6 +1186,7 @@ Content revision v32.27:
     .settings-action-count {
       color: #bdbdbd;
       font-size: .9rem;
+      font-weight: 550;
       white-space: nowrap;
     }
 
@@ -1216,10 +1221,14 @@ Content revision v32.27:
       gap: 3px;
     }
 
+    .settings-toggle strong {
+      font-weight: 700;
+    }
+
     .settings-toggle small {
       color: #aaa;
       font-size: .78rem;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .toggle-state {
@@ -1230,6 +1239,7 @@ Content revision v32.27:
       color: #ccc;
       text-align: center;
       font-size: .78rem;
+      font-weight: 600;
     }
 
     .settings-toggle[aria-checked="true"] .toggle-state {
@@ -1263,14 +1273,14 @@ Content revision v32.27:
     }
 
     .expansion-pack-name {
-      font-weight: 800;
+      font-weight: 700;
       line-height: 1.25;
     }
 
     .expansion-pack-meta {
       color: #aaa;
       font-size: .76rem;
-      font-weight: 500;
+      font-weight: 400;
       line-height: 1.35;
     }
 
@@ -1282,6 +1292,7 @@ Content revision v32.27:
       color: #ccc;
       text-align: center;
       font-size: .76rem;
+      font-weight: 600;
       white-space: nowrap;
     }
 
@@ -1966,7 +1977,7 @@ Content revision v32.27:
       margin: 0 0 12px;
       color: #f5f5f1;
       font-size: clamp(.92rem, 3vw, 1.05rem);
-      font-weight: 900;
+      font-weight: 700;
       letter-spacing: -.02em;
       text-transform: none;
     }
@@ -1975,6 +1986,7 @@ Content revision v32.27:
       margin: 0;
       color: #fff;
       font-size: clamp(2rem, 8vw, 3rem);
+      font-weight: 800;
       line-height: 1;
       letter-spacing: -.045em;
     }
@@ -1984,6 +1996,7 @@ Content revision v32.27:
       max-width: 440px;
       color: #d8d8d3;
       font-size: clamp(1rem, 4vw, 1.15rem);
+      font-weight: 400;
       line-height: 1.62;
     }
 
@@ -1991,6 +2004,7 @@ Content revision v32.27:
       margin: 13px 0 0;
       color: #8f8f8a;
       font-size: .94rem;
+      font-weight: 400;
       line-height: 1.45;
     }
 
@@ -2007,9 +2021,16 @@ Content revision v32.27:
       padding: 13px 18px;
       font: inherit;
       font-size: 1rem;
-      font-weight: 900;
       cursor: pointer;
       touch-action: manipulation;
+    }
+
+    .content-gate-button.primary {
+      font-weight: 700;
+    }
+
+    .content-gate-button.secondary {
+      font-weight: 600;
     }
 
     .content-gate-button.primary {
@@ -2076,6 +2097,84 @@ Content revision v32.27:
 
       .content-gate-actions {
         margin-top: 18px;
+      }
+    }
+
+
+    /* Desktop interaction refinements */
+    @media (min-width: 761px) {
+      .round-action .down-symbol {
+        display: none !important;
+      }
+
+      .round-action .refresh-symbol {
+        display: block !important;
+      }
+
+      .round-action-icon {
+        animation: none;
+      }
+
+      .round-action.is-spinning .refresh-symbol {
+        animation: desktopRefreshSpin .56s cubic-bezier(.4,0,.2,1) both !important;
+      }
+
+      .board.round-leaving .card {
+        transition:
+          opacity .21s ease,
+          transform .21s ease,
+          box-shadow .18s ease !important;
+      }
+
+      .board.round-entering .card {
+        animation: desktopRoundCardIn .32s cubic-bezier(.2,.8,.2,1) both !important;
+      }
+
+      .card-reroll.is-spinning svg {
+        animation: desktopCardRerollSpin .56s cubic-bezier(.4,0,.2,1) both !important;
+      }
+
+      .card.card-reroll-leaving {
+        transition:
+          opacity .2s ease,
+          transform .2s ease,
+          box-shadow .18s ease !important;
+      }
+
+      .card.card-reroll-entering {
+        animation: desktopCardRerollIn .3s cubic-bezier(.2,.8,.2,1) both !important;
+      }
+    }
+
+    @keyframes desktopRefreshSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes desktopCardRerollSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes desktopRoundCardIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px) scale(.982);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes desktopCardRerollIn {
+      from {
+        opacity: 0;
+        transform: translateY(-9px) scale(.982);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
       }
     }
 
@@ -2384,7 +2483,7 @@ Content revision v32.27:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 32.27 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 32.29 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד
       </footer>
     </section>
@@ -2576,10 +2675,10 @@ Content revision v32.27:
 
   <button
     id="roundActionButton"
-    class="round-action is-down"
+    class="round-action is-new-round"
     type="button"
-    aria-label="עבור לקלף הלבן"
-    title="עבור לקלף הלבן"
+    aria-label="סיבוב חדש"
+    title="סיבוב חדש"
   >
     <span class="round-action-icon" aria-hidden="true">
       <svg class="down-symbol" viewBox="0 0 24 24" focusable="false">
@@ -4260,13 +4359,16 @@ Content revision v32.27:
 
       restartCardRerollSpin(button);
 
+      const leaveDuration = desktopAwareDuration(145, 200);
+      const enterDuration = desktopAwareDuration(260, 310);
+
       // Let the icon begin rotating before the selected card fades.
       await nextPaint();
       startSingleCardLeave(targetCard);
 
       try {
         await new Promise((resolve) =>
-          setTimeout(resolve, 145)
+          setTimeout(resolve, leaveDuration)
         );
 
         let message;
@@ -4314,7 +4416,7 @@ Content revision v32.27:
         await Promise.all([
           updateLayoutAfterCardReroll(),
           new Promise((resolve) =>
-            setTimeout(resolve, 260)
+            setTimeout(resolve, enterDuration)
           )
         ]);
       } finally {
@@ -5320,6 +5422,16 @@ Content revision v32.27:
       return !document.fullscreenElement && window.innerWidth <= 760;
     }
 
+    function isDesktopGameLayout() {
+      return window.innerWidth > 760;
+    }
+
+    function desktopAwareDuration(mobileDuration, desktopDuration) {
+      return isDesktopGameLayout()
+        ? desktopDuration
+        : mobileDuration;
+    }
+
     function adaptiveAnchorPanel() {
       if (
         currentCardSection === "white" ||
@@ -5774,6 +5886,19 @@ Content revision v32.27:
       haptic(15);
       markUiActive();
 
+      const leaveDuration = desktopAwareDuration(145, 210);
+      const enterDuration = desktopAwareDuration(260, 330);
+
+      roundActionButton.classList.remove("is-spinning");
+      gameBoard.classList.remove(
+        "round-leaving",
+        "round-entering"
+      );
+
+      // Restart both animation timelines even after rapid repeated rounds.
+      void roundActionButton.offsetWidth;
+      void gameBoard.offsetWidth;
+
       roundActionButton.classList.add("is-spinning");
       gameBoard.classList.add("round-leaving");
 
@@ -5781,7 +5906,12 @@ Content revision v32.27:
         showRandomBlack();
         setRoundActionState("black");
 
-        gameBoard.classList.remove("round-leaving");
+        gameBoard.classList.remove(
+          "round-leaving",
+          "round-entering"
+        );
+
+        void gameBoard.offsetWidth;
         gameBoard.classList.add("round-entering");
 
         navigationInProgress = true;
@@ -5795,7 +5925,10 @@ Content revision v32.27:
             await configureAdaptiveLayout({
               preserveAnchor: false
             });
-            await smoothScrollToPanel(blackPanel);
+
+            if (!isDesktopGameLayout()) {
+              await smoothScrollToPanel(blackPanel);
+            }
           }
 
           navigationInProgress = false;
@@ -5809,8 +5942,8 @@ Content revision v32.27:
           gameBoard.classList.remove("round-entering");
           roundActionButton.classList.remove("is-spinning");
           roundTransitioning = false;
-        }, 260);
-      }, 145);
+        }, enterDuration);
+      }, leaveDuration);
     }
     function updateDeckZoneVisibility() {}
 
@@ -5824,6 +5957,7 @@ Content revision v32.27:
       // When the black card is "בחר 2", both white cards already fit in the
       // same view, so the arrow is unnecessary.
       const showNewRound =
+        isDesktopGameLayout() ||
         fullscreenRoundFits ||
         (isMobileAdaptiveLayout()
           ? currentHandVisibleEnough()
@@ -5843,7 +5977,7 @@ Content revision v32.27:
     function updateRoundActionState() {
       updateDeckZoneVisibility();
 
-      if (fullscreenRoundFits) {
+      if (isDesktopGameLayout() || fullscreenRoundFits) {
         setRoundActionState("black");
         return;
       }
@@ -5875,6 +6009,7 @@ Content revision v32.27:
       // "בחר 2" already shows the entire hand, so the main action should
       // immediately start the next round.
       if (
+        isDesktopGameLayout() ||
         fullscreenRoundFits ||
         (isMobileAdaptiveLayout()
           ? currentHandVisibleEnough()
