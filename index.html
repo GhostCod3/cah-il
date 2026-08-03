@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.9.3.2:
-- Aligns the player fullscreen control to the same lower baseline in hand, submitted and reveal views
-- Removes the unnecessary raised offset from the hidden-answer screens
-- Preserves all v34.9.3.1 behavior, offline state, classic mode and all 1,040 cards
+Content revision v34.9.4:
+- Adds a dedicated install action to the table-mode role-selection screen
+- Shows the table install action only when the browser PWA prompt is available
+- Keeps the install action above the fullscreen control to avoid overlap
+- Expands the content-warning brand to the full edition name and updates its year dynamically
+- Preserves all v34.9.3.2 behavior, offline state, classic mode and all 1,040 cards
 - Internal deck content version remains 33.6
 -->
 
@@ -25,8 +27,8 @@ Content revision v34.9.3.2:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.3.2" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.3.2" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.4" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.4" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -36,7 +38,7 @@ Content revision v34.9.3.2:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.3.2" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.4" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -1991,10 +1993,12 @@ Content revision v34.9.3.2:
     }
 
     .content-gate-brand {
-      margin: 0 0 12px;
+      width: min(100%, 430px);
+      margin: 0 auto 12px;
       color: #f5f5f1;
-      font-size: clamp(.92rem, 3vw, 1.05rem);
+      font-size: clamp(.88rem, 2.9vw, 1.02rem);
       font-weight: 700;
+      line-height: 1.35;
       letter-spacing: -.02em;
       text-transform: none;
     }
@@ -2231,7 +2235,7 @@ Content revision v34.9.3.2:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.9.3.2
+       Offline table game — v34.9.4
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -2507,8 +2511,57 @@ Content revision v34.9.3.2:
       gap: 8px;
     }
 
-    .table-overlay-fullscreen[hidden] {
+    .table-overlay-fullscreen[hidden],
+    .table-install-floating[hidden] {
       display: none !important;
+    }
+
+    .table-install-floating {
+      position: fixed;
+      left: max(18px, env(safe-area-inset-left));
+      bottom: calc(78px + env(safe-area-inset-bottom));
+      z-index: 53;
+      min-height: 46px;
+      padding: 0 14px;
+      border: 1px solid #3a3a3a;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(31,31,31,.96);
+      color: #fff;
+      font-size: .82rem;
+      font-weight: 750;
+      white-space: nowrap;
+      box-shadow: 0 12px 34px rgba(0,0,0,.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: transform .14s ease, background .16s ease, border-color .16s ease, opacity .16s ease;
+    }
+
+    .table-install-floating svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+      pointer-events: none;
+    }
+
+    .table-install-floating:hover {
+      background: #292929;
+      border-color: #505050;
+    }
+
+    .table-install-floating:active { transform: scale(.96); }
+
+    .table-install-floating:focus-visible {
+      outline: 3px solid rgba(255,255,255,.88);
+      outline-offset: 3px;
+    }
+
+    .table-install-floating:disabled {
+      cursor: wait;
+      opacity: .55;
     }
 
     .table-overlay-fullscreen .table-overlay-fullscreen-label {
@@ -3319,6 +3372,14 @@ Content revision v34.9.3.2:
         font-size: .78rem;
       }
 
+      .table-install-floating {
+        bottom: calc(74px + env(safe-area-inset-bottom));
+        min-height: 44px;
+        padding: 0 12px;
+        gap: 7px;
+        font-size: .78rem;
+      }
+
       .table-player-header {
         gap: 9px;
         margin-bottom: 9px;
@@ -3452,7 +3513,9 @@ Content revision v34.9.3.2:
   >
     <section id="contentGateWarning" class="content-gate-card">
       <div class="content-gate-badge content-gate-age-symbol" aria-hidden="true">🔞</div>
-      <p class="content-gate-brand">קלפים נגד האנושות</p>
+      <p id="contentGateBrand" class="content-gate-brand">
+        קלפים נגד האנושות — מהדורת 2026 בלי ברקסים
+      </p>
       <h2 id="contentGateTitle">אזהרת תוכן</h2>
 
       <p id="contentGateDescription" class="content-gate-copy">
@@ -3749,6 +3812,22 @@ Content revision v34.9.3.2:
       </section>
 
       <button
+        id="tableInstallButton"
+        class="table-install-floating"
+        type="button"
+        aria-label="התקנת המשחק במסך הבית"
+        title="התקנת המשחק"
+        hidden
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 16v3h14v-3"
+                fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>התקנה</span>
+      </button>
+
+      <button
         id="tableFullscreenButton"
         class="floating-icon table-overlay-fullscreen"
         type="button"
@@ -4021,7 +4100,7 @@ Content revision v34.9.3.2:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.9.3.2 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.9.4 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -4341,6 +4420,13 @@ Content revision v34.9.3.2:
       if (subtitle) {
         subtitle.textContent =
           `מהדורת ${CURRENT_EDITION_YEAR} — בלי ברקסים`;
+      }
+
+      const contentGateBrand =
+        document.getElementById("contentGateBrand");
+      if (contentGateBrand) {
+        contentGateBrand.textContent =
+          `קלפים נגד האנושות — מהדורת ${CURRENT_EDITION_YEAR} בלי ברקסים`;
       }
     }
 
@@ -6014,6 +6100,7 @@ Content revision v34.9.3.2:
     const wakeLockDescription = document.getElementById("wakeLockDescription");
     const installAppButton = document.getElementById("installAppButton");
     const installAppState = document.getElementById("installAppState");
+    const tableInstallButton = document.getElementById("tableInstallButton");
 
     let currentListType = "black";
     let visibleListCards = [];
@@ -6267,22 +6354,47 @@ Content revision v34.9.3.2:
       );
     }
 
+    function tableInstallScreenIsVisible() {
+      const overlay = document.getElementById("tableAppOverlay");
+      const roleScreen = document.getElementById("tableRoleScreen");
+      return Boolean(
+        overlay && roleScreen && !overlay.hidden &&
+        overlay.classList.contains("is-open") && !roleScreen.hidden
+      );
+    }
+
     function updateInstallAppUi() {
       const installed = isInstalledPwa();
+      const available = Boolean(deferredInstallPrompt);
 
-      if (installed) {
-        installAppButton.hidden = true;
-        installAppButton.disabled = false;
-        installAppState.textContent = "מותקן";
-        return;
+      if (installAppButton) {
+        installAppButton.hidden = installed || !available;
+        installAppButton.disabled = !available;
+        installAppState.textContent = installed
+          ? "מותקן"
+          : available ? "למסך הבית" : "לא זמין";
       }
 
-      const available = Boolean(deferredInstallPrompt);
-      installAppButton.hidden = !available;
-      installAppButton.disabled = !available;
-      installAppState.textContent = available
-        ? "למסך הבית"
-        : "לא זמין";
+      if (tableInstallButton) {
+        tableInstallButton.hidden =
+          installed || !available || !tableInstallScreenIsVisible();
+        tableInstallButton.disabled = !available;
+      }
+    }
+
+    function setInstallButtonsDisabled(disabled) {
+      [installAppButton, tableInstallButton]
+        .filter(Boolean)
+        .forEach((button) => { button.disabled = disabled; });
+    }
+
+    function showInstallFeedback(message, duration) {
+      const tableOverlay = document.getElementById("tableAppOverlay");
+      if (tableOverlay && !tableOverlay.hidden && tableOverlay.classList.contains("is-open")) {
+        tableSetStatus(message, duration);
+      } else {
+        setStatus(message, duration);
+      }
     }
 
     async function promptAppInstallation() {
@@ -6293,7 +6405,7 @@ Content revision v34.9.3.2:
 
       const promptEvent = deferredInstallPrompt;
       deferredInstallPrompt = null;
-      installAppButton.disabled = true;
+      setInstallButtonsDisabled(true);
       installAppState.textContent = "פותח התקנה";
 
       try {
@@ -6302,15 +6414,15 @@ Content revision v34.9.3.2:
 
         if (choice.outcome === "accepted") {
           closeSettings();
-          setStatus("המשחק נוסף למסך הבית", 2600);
+          showInstallFeedback("המשחק נוסף למסך הבית", 2600);
         } else {
-          setStatus("ההתקנה בוטלה", 1800);
+          showInstallFeedback("ההתקנה בוטלה", 1800);
         }
       } catch (error) {
         console.warn("PWA install prompt failed", error);
-        setStatus("ההתקנה אינה זמינה כרגע", 2200);
+        showInstallFeedback("ההתקנה אינה זמינה כרגע", 2200);
       } finally {
-        installAppButton.disabled = false;
+        setInstallButtonsDisabled(false);
         updateInstallAppUi();
       }
     }
@@ -6677,7 +6789,12 @@ Content revision v34.9.3.2:
       }
     });
 
-    installAppButton.addEventListener(
+    installAppButton?.addEventListener(
+      "click",
+      promptAppInstallation
+    );
+
+    tableInstallButton?.addEventListener(
       "click",
       promptAppInstallation
     );
@@ -8493,6 +8610,8 @@ Content revision v34.9.3.2:
           "החלף תפקיד"
         );
       }
+
+      updateInstallAppUi();
 
       tableAppOverlay.scrollTo({
         top: 0,
