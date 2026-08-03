@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.10.3:
-- Restores the Android fullscreen flow from the previously verified working v34.9.5.1 release
-- Requests fullscreen on document.body first, with documentElement as fallback
-- Restores the touch pointerup path on the opening warning while retaining click fallback
-- Restores preventDefault on fullscreen control clicks to avoid duplicate Android tap behavior
-- Preserves the complete table menu, modal-layer fixes, offline state and all 1,040 cards
+Content revision v34.10.5:
+- Keeps the verified Android fullscreen flow from v34.10.3/v34.10.4
+- Opens table-menu card browser, deck editor and rules in the browser Top Layer
+- Uses manual Popover API mounting instead of changing the fullscreen element DOM tree
+- Restores shared modals to normal document behavior after closing
+- Includes a safe fallback for browsers without Popover API support
+- Preserves the complete table menu, offline state and all 1,040 cards
 - Internal deck content version remains 33.6
 -->
 
@@ -27,8 +28,8 @@ Content revision v34.10.3:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.3" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.3" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.5" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.5" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -38,7 +39,7 @@ Content revision v34.10.3:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.3" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.5" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -860,6 +861,23 @@ Content revision v34.10.3:
 
     .table-settings-overlay {
       z-index: 8200;
+    }
+
+    .table-top-layer-modal[popover] {
+      width: auto;
+      height: auto;
+      max-width: none;
+      max-height: none;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      color: inherit;
+      background: transparent;
+      overflow: visible;
+    }
+
+    .table-top-layer-modal[popover]::backdrop {
+      background: transparent;
     }
 
     .settings-sheet {
@@ -2240,7 +2258,7 @@ Content revision v34.10.3:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.10.3
+       Offline table game — v34.10.5
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -4197,7 +4215,7 @@ Content revision v34.10.3:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.10.3 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.10.5 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -4327,7 +4345,7 @@ Content revision v34.10.3:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.10.2</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.10.5</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -6364,6 +6382,89 @@ Content revision v34.10.3:
     let deferredInstallPrompt = null;
 
     const modalReturnFocus = new WeakMap();
+
+    function prepareTableTopLayerModal(modal) {
+      if (!modal) return;
+
+      modal.setAttribute("popover", "manual");
+      modal.classList.add("table-top-layer-modal");
+      modal.dataset.tableTopLayer = "true";
+    }
+
+    function revealTableTopLayerModal(modal) {
+      if (
+        !modal ||
+        modal.dataset.tableTopLayer !== "true"
+      ) {
+        return;
+      }
+
+      if (typeof modal.showPopover === "function") {
+        try {
+          if (!modal.matches(":popover-open")) {
+            modal.showPopover();
+          }
+          return;
+        } catch (error) {
+          console.warn(
+            "Could not open table modal in Top Layer",
+            error
+          );
+        }
+      }
+
+      // Fallback for older browsers: leave fullscreen before showing
+      // a normal fixed modal so it cannot be hidden behind it.
+      const exitFullscreen =
+        document.exitFullscreen ||
+        document.webkitExitFullscreen ||
+        document.webkitCancelFullScreen;
+
+      if (
+        gameFullscreenElement() &&
+        typeof exitFullscreen === "function"
+      ) {
+        try {
+          const result = exitFullscreen.call(document);
+
+          if (
+            result &&
+            typeof result.catch === "function"
+          ) {
+            result.catch(() => {});
+          }
+        } catch {
+          // The fixed-position modal remains usable outside fullscreen.
+        }
+      }
+
+      modal.removeAttribute("popover");
+      modal.classList.remove("table-top-layer-modal");
+    }
+
+    function closeTableTopLayerModal(modal) {
+      if (
+        !modal ||
+        modal.dataset.tableTopLayer !== "true"
+      ) {
+        return;
+      }
+
+      if (typeof modal.hidePopover === "function") {
+        try {
+          if (modal.matches(":popover-open")) {
+            modal.hidePopover();
+          }
+        } catch {
+          // The popover may already have been closed by the browser.
+        }
+      }
+
+      modal.removeAttribute("popover");
+      modal.classList.remove("table-top-layer-modal");
+      delete modal.dataset.tableTopLayer;
+    }
+
     const modalRootSelector = [
       ".settings-overlay",
       ".list-browser-modal",
@@ -6585,11 +6686,13 @@ Content revision v34.10.3:
       rememberModalTrigger(listBrowserModal);
       listBrowserModal.hidden = false;
       listBrowserModal.classList.add("is-open");
+      revealTableTopLayerModal(listBrowserModal);
       syncModalOpenState();
       focusInsideModal(listBrowserModal, listSearch);
     }
 
     function closeListBrowser() {
+      closeTableTopLayerModal(listBrowserModal);
       listBrowserModal.classList.remove("is-open");
       listBrowserModal.hidden = true;
       listSearch.value = "";
@@ -7599,11 +7702,13 @@ Content revision v34.10.3:
       rememberModalTrigger(deckEditorModal);
       deckEditorModal.hidden = false;
       deckEditorModal.classList.add("is-open");
+      revealTableTopLayerModal(deckEditorModal);
       syncModalOpenState();
       focusInsideModal(deckEditorModal, deckEditorClose);
     }
 
     function closeEditor() {
+      closeTableTopLayerModal(deckEditorModal);
       deckEditorModal.classList.remove("is-open");
       deckEditorModal.hidden = true;
       syncModalOpenState();
@@ -7667,6 +7772,7 @@ Content revision v34.10.3:
       rememberModalTrigger(modal);
       modal.hidden = false;
       modal.classList.add("is-open");
+      revealTableTopLayerModal(modal);
       syncModalOpenState();
 
       const closeButton = modal.querySelector(".rules-close");
@@ -7674,6 +7780,7 @@ Content revision v34.10.3:
     }
 
     function closeRulesModal(modal) {
+      closeTableTopLayerModal(modal);
       modal.classList.remove("is-open");
       modal.hidden = true;
       syncModalOpenState();
@@ -8901,7 +9008,7 @@ Content revision v34.10.3:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.10.2 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.10.5 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
@@ -9646,21 +9753,25 @@ Content revision v34.10.3:
 
     tableOpenCardBrowser.addEventListener("click", () => {
       closeTableSettings();
+      prepareTableTopLayerModal(listBrowserModal);
       openListBrowser(currentListType, "table");
     });
 
     tableDeckEditorButton.addEventListener("click", () => {
       closeTableSettings();
+      prepareTableTopLayerModal(deckEditorModal);
       openEditor();
     });
 
     tableBasicRulesButton.addEventListener("click", () => {
       closeTableSettings();
+      prepareTableTopLayerModal(basicRulesModal);
       openRulesModal(basicRulesModal);
     });
 
     tableHouseRulesButton.addEventListener("click", () => {
       closeTableSettings();
+      prepareTableTopLayerModal(houseRulesModal);
       openRulesModal(houseRulesModal);
     });
 
