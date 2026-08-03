@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.10.1:
-- Fixes the table settings drawer appearing behind the table-mode overlay
-- Gives the table settings overlay a dedicated z-index above the table game screen
-- Preserves all v34.10 table-deck controls, offline state, classic mode and all 1,040 cards
+Content revision v34.10.3:
+- Restores the Android fullscreen flow from the previously verified working v34.9.5.1 release
+- Requests fullscreen on document.body first, with documentElement as fallback
+- Restores the touch pointerup path on the opening warning while retaining click fallback
+- Restores preventDefault on fullscreen control clicks to avoid duplicate Android tap behavior
+- Preserves the complete table menu, modal-layer fixes, offline state and all 1,040 cards
 - Internal deck content version remains 33.6
 -->
 
@@ -25,8 +27,8 @@ Content revision v34.10.1:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.1" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.1" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.3" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.3" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -36,7 +38,7 @@ Content revision v34.10.1:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.1" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.3" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -227,7 +229,7 @@ Content revision v34.10.1:
     .pair-modal {
       position: fixed;
       inset: 0;
-      z-index: 2000;
+      z-index: 8400;
       display: none;
       align-items: center;
       justify-content: center;
@@ -356,7 +358,7 @@ Content revision v34.10.1:
     .rules-modal {
       position: fixed;
       inset: 0;
-      z-index: 2200;
+      z-index: 8400;
       display: none;
       align-items: center;
       justify-content: center;
@@ -564,7 +566,7 @@ Content revision v34.10.1:
     .editor-modal {
       position: fixed;
       inset: 0;
-      z-index: 2600;
+      z-index: 8400;
       display: none;
       align-items: center;
       justify-content: center;
@@ -732,7 +734,7 @@ Content revision v34.10.1:
 
     .status {
       position: fixed;
-      z-index: 1150;
+      z-index: 8500;
       left: 50%;
       bottom: calc(92px + env(safe-area-inset-bottom));
       transform: translateX(-50%);
@@ -1351,7 +1353,7 @@ Content revision v34.10.1:
     .list-browser-modal {
       position: fixed;
       inset: 0;
-      z-index: 2400;
+      z-index: 8400;
       display: none;
       background: #101010;
       color: #f5f5f5;
@@ -2238,7 +2240,7 @@ Content revision v34.10.1:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.10.1
+       Offline table game — v34.10.3
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -4195,7 +4197,7 @@ Content revision v34.10.1:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.10.1 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.10.3 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -4325,7 +4327,7 @@ Content revision v34.10.1:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.10.1</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.10.2</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -7361,7 +7363,10 @@ Content revision v34.10.1:
           isInstalledPwa();
 
         if (!fullscreenLike) {
-          showFullscreenFailure(result);
+          showFullscreenFailure(
+            result,
+            event?.currentTarget || fullscreenButton
+          );
         }
       });
     }
@@ -8896,7 +8901,7 @@ Content revision v34.10.1:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.10 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.10.2 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
