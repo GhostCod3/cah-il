@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.9.5.1:
-- Fixes browser fullscreen activation by using one direct click handler per fullscreen control
-- Removes competing pointerup/click handlers that could consume the Android user gesture
-- Guarantees the fullscreen interaction lock is released after success, rejection or timeout
-- Shows fullscreen failure feedback on the control that was actually pressed
-- Preserves standalone-PWA hiding, offline state, classic mode and all 1,040 cards
+Content revision v34.10.1:
+- Fixes the table settings drawer appearing behind the table-mode overlay
+- Gives the table settings overlay a dedicated z-index above the table game screen
+- Preserves all v34.10 table-deck controls, offline state, classic mode and all 1,040 cards
 - Internal deck content version remains 33.6
 -->
 
@@ -27,8 +25,8 @@ Content revision v34.9.5.1:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.5.1" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.5.1" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.1" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.1" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -38,7 +36,7 @@ Content revision v34.9.5.1:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.5.1" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.1" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -856,6 +854,10 @@ Content revision v34.9.5.1:
 
     .settings-overlay.is-open {
       display: flex;
+    }
+
+    .table-settings-overlay {
+      z-index: 8200;
     }
 
     .settings-sheet {
@@ -2236,7 +2238,7 @@ Content revision v34.9.5.1:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.9.5.1
+       Offline table game — v34.10.1
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -2628,6 +2630,58 @@ Content revision v34.9.5.1:
       color: #aaa;
       font-size: clamp(.88rem, 2.4vw, .96rem);
       line-height: 1.42;
+    }
+
+    .table-role-deck-summary {
+      margin-top: 12px;
+      padding: 9px 12px;
+      border: 1px solid #343434;
+      border-radius: 12px;
+      background: rgba(255,255,255,.035);
+      color: #d0d0ca;
+      font-size: .84rem;
+      font-weight: 700;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .table-settings-floating {
+      position: fixed;
+      right: max(18px, env(safe-area-inset-right));
+      bottom: max(18px, env(safe-area-inset-bottom));
+      z-index: 52;
+      box-shadow: 0 12px 34px rgba(0,0,0,.42);
+    }
+
+    .table-settings-floating[hidden] {
+      display: none !important;
+    }
+
+    .table-deck-change-notice {
+      margin-top: 12px;
+      padding: 13px;
+      border: 1px solid #5a5140;
+      border-radius: 14px;
+      background: rgba(132,104,49,.12);
+    }
+
+    .table-deck-change-notice p {
+      margin: 0;
+      color: #ded5c2;
+      font-size: .82rem;
+      line-height: 1.48;
+    }
+
+    .table-deck-change-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 11px;
+    }
+
+    .table-reset-action.is-confirming {
+      border-color: #865f5f;
+      background: rgba(116,50,50,.24);
     }
 
     .table-name-field {
@@ -3366,6 +3420,12 @@ Content revision v34.9.5.1:
         line-height: 1.38;
       }
 
+      .table-role-deck-summary {
+        margin-top: 10px;
+        padding: 8px 10px;
+        font-size: .78rem;
+      }
+
       .table-overlay-fullscreen {
         height: 46px;
         padding: 0 13px 0 11px;
@@ -3675,6 +3735,8 @@ Content revision v34.9.5.1:
             אפשר להחליף תפקיד בכל רגע. היד הפרטית שלך נשמרת גם בזמן שאתה הצאר.
           </p>
 
+          <div id="tableRoleDeckSummary" class="table-role-deck-summary"></div>
+
           <div class="table-name-field">
             <label for="tablePlayerName">שם לתצוגה — לא חובה</label>
             <input
@@ -3826,6 +3888,23 @@ Content revision v34.9.5.1:
           </div>
         </div>
       </section>
+
+      <button
+        id="tableSettingsButton"
+        class="floating-icon table-settings-floating"
+        type="button"
+        aria-label="תפריט שולחן"
+        title="תפריט שולחן"
+        hidden
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
+                fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.08V21h-4v-.08A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.08-.4H3v-4h.08A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.08V3h4v.08A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.15.36.36.7.6 1 .28.34.66.55 1.08.6H21v4h-.08a1.7 1.7 0 0 0-1.52.4Z"
+                fill="none" stroke="currentColor" stroke-width="1.55"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
 
       <button
         id="tableInstallButton"
@@ -4116,12 +4195,141 @@ Content revision v34.9.5.1:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.9.5.1 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.10.1 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
   </div>
 
+
+
+  <div id="tableSettingsOverlay" class="settings-overlay table-settings-overlay" hidden>
+    <section class="settings-sheet" role="dialog" aria-modal="true" aria-labelledby="tableSettingsTitle">
+      <div class="settings-handle" aria-hidden="true"></div>
+
+      <div class="settings-heading">
+        <h2 id="tableSettingsTitle">תפריט שולחן</h2>
+        <button id="tableSettingsClose" class="settings-close" type="button" aria-label="סגור">×</button>
+      </div>
+
+      <div class="settings-actions">
+        <section class="settings-section" aria-labelledby="tableGameMenuSection">
+          <div id="tableGameMenuSection" class="settings-section-title">משחק</div>
+
+          <button id="tableRegularModeButton" class="settings-action" type="button">
+            🎴 משחק רגיל
+          </button>
+
+          <button id="tableResetGameButton" class="settings-action table-reset-action" type="button">
+            <span id="tableResetGameLabel">↻ איפוס משחק השולחן</span>
+          </button>
+
+          <button
+            id="tableWakeLockToggle"
+            class="settings-toggle"
+            type="button"
+            role="switch"
+            aria-checked="false"
+          >
+            <span>
+              <strong>☀ השאר את המסך דולק</strong>
+              <small id="tableWakeLockDescription">מונע מהמסך להיכבות בזמן המשחק</small>
+            </span>
+            <span id="tableWakeLockState" class="toggle-state">כבוי</span>
+          </button>
+
+          <button
+            id="tableSettingsInstallButton"
+            class="settings-action settings-action-split install-app-action"
+            type="button"
+            hidden
+          >
+            <span class="settings-action-title">התקנת המשחק</span>
+            <span id="tableSettingsInstallState" class="install-app-state">למסך הבית</span>
+          </button>
+        </section>
+
+        <section class="settings-section" aria-labelledby="tableDeckMenuSection">
+          <div id="tableDeckMenuSection" class="settings-section-title">חפיסה</div>
+
+          <button
+            id="tableExpansionPanelToggle"
+            class="settings-action settings-action-split settings-disclosure"
+            type="button"
+            aria-expanded="false"
+            aria-controls="tableExpansionPanel"
+          >
+            <span class="settings-action-copy">
+              <span class="settings-action-title">🧩 חבילות פעילות</span>
+              <span id="tableExpansionMenuSummary" class="settings-action-meta"></span>
+            </span>
+            <span class="settings-action-tail" aria-hidden="true">
+              <span class="settings-chevron">⌄</span>
+            </span>
+          </button>
+
+          <div id="tableExpansionPanel" class="settings-subpanel" hidden>
+            <div
+              id="tableExpansionPackList"
+              class="expansion-pack-list"
+              aria-label="בחירת חבילות למצב שולחן"
+            ></div>
+
+            <div id="tableExpansionQuickActions" class="expansion-quick-actions">
+              <button id="tableBaseOnlyPacks" class="expansion-quick-button" type="button">
+                רק חבילת הבסיס
+              </button>
+              <button id="tableAllPacks" class="expansion-quick-button" type="button">
+                הפעלת כל ההרחבות
+              </button>
+            </div>
+
+            <p id="tableExpansionSummary" class="expansion-summary"></p>
+
+            <div id="tableDeckChangeNotice" class="table-deck-change-notice" hidden>
+              <p>
+                שינוי החבילות יאפס את היד ואת הקלפים שכבר נשלפו. השם והניקוד יישמרו.
+              </p>
+              <div class="table-deck-change-actions">
+                <button id="tableApplyDeckChanges" class="expansion-quick-button" type="button">
+                  החל חפיסה
+                </button>
+                <button id="tableCancelDeckChanges" class="expansion-quick-button" type="button">
+                  ביטול
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button id="tableOpenCardBrowser" class="settings-action settings-action-split card-browser-menu-action" type="button">
+            <span class="settings-action-title">עיון בקלפים</span>
+            <span id="tableCardBrowserSummary" class="settings-action-count"></span>
+          </button>
+
+          <button id="tableDeckEditorButton" class="settings-action" type="button">
+            ✎ עריכת חבילת הבסיס
+          </button>
+        </section>
+
+        <section class="settings-section" aria-labelledby="tableHelpMenuSection">
+          <div id="tableHelpMenuSection" class="settings-section-title">עזרה</div>
+
+          <button id="tableBasicRulesButton" class="settings-action" type="button">
+            💩 חוקים בסיסיים 💩
+          </button>
+
+          <button id="tableHouseRulesButton" class="settings-action" type="button">
+            🃏 חוקי הבית 🃏
+          </button>
+        </section>
+      </div>
+
+      <footer class="settings-menu-footer">
+        <strong id="tableSettingsFooterSummary">גרסה 34.10.1</strong><br>
+        מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
+      </footer>
+    </section>
+  </div>
 
 
   <div id="listBrowserModal" class="list-browser-modal" role="dialog" aria-modal="true" aria-labelledby="listBrowserTitle" hidden>
@@ -6117,8 +6325,37 @@ Content revision v34.9.5.1:
     const installAppButton = document.getElementById("installAppButton");
     const installAppState = document.getElementById("installAppState");
     const tableInstallButton = document.getElementById("tableInstallButton");
+    const tableSettingsButton = document.getElementById("tableSettingsButton");
+    const tableSettingsOverlay = document.getElementById("tableSettingsOverlay");
+    const tableSettingsClose = document.getElementById("tableSettingsClose");
+    const tableRegularModeButton = document.getElementById("tableRegularModeButton");
+    const tableResetGameButton = document.getElementById("tableResetGameButton");
+    const tableResetGameLabel = document.getElementById("tableResetGameLabel");
+    const tableWakeLockToggle = document.getElementById("tableWakeLockToggle");
+    const tableWakeLockState = document.getElementById("tableWakeLockState");
+    const tableWakeLockDescription = document.getElementById("tableWakeLockDescription");
+    const tableSettingsInstallButton = document.getElementById("tableSettingsInstallButton");
+    const tableSettingsInstallState = document.getElementById("tableSettingsInstallState");
+    const tableExpansionPanelToggle = document.getElementById("tableExpansionPanelToggle");
+    const tableExpansionPanel = document.getElementById("tableExpansionPanel");
+    const tableExpansionPackList = document.getElementById("tableExpansionPackList");
+    const tableExpansionQuickActions = document.getElementById("tableExpansionQuickActions");
+    const tableBaseOnlyPacks = document.getElementById("tableBaseOnlyPacks");
+    const tableAllPacks = document.getElementById("tableAllPacks");
+    const tableExpansionMenuSummary = document.getElementById("tableExpansionMenuSummary");
+    const tableExpansionSummary = document.getElementById("tableExpansionSummary");
+    const tableDeckChangeNotice = document.getElementById("tableDeckChangeNotice");
+    const tableApplyDeckChanges = document.getElementById("tableApplyDeckChanges");
+    const tableCancelDeckChanges = document.getElementById("tableCancelDeckChanges");
+    const tableOpenCardBrowser = document.getElementById("tableOpenCardBrowser");
+    const tableCardBrowserSummary = document.getElementById("tableCardBrowserSummary");
+    const tableDeckEditorButton = document.getElementById("tableDeckEditorButton");
+    const tableBasicRulesButton = document.getElementById("tableBasicRulesButton");
+    const tableHouseRulesButton = document.getElementById("tableHouseRulesButton");
+    const tableSettingsFooterSummary = document.getElementById("tableSettingsFooterSummary");
 
     let currentListType = "black";
+    let listBrowserDeckContext = "regular";
     let visibleListCards = [];
     let wakeLockSentinel = null;
     let wakeLockWanted = false;
@@ -6227,6 +6464,7 @@ Content revision v34.9.5.1:
       requestAnimationFrame(() => {
         const fallbackCandidates = [
           remembered,
+          tableSettingsButton,
           settingsButton,
           document.getElementById("roundActionButton")
         ];
@@ -6269,6 +6507,13 @@ Content revision v34.9.5.1:
     document.addEventListener("keydown", trapFocusInsideTopModal);
 
     function currentListCards() {
+      if (listBrowserDeckContext === "table" && tableState) {
+        return tableDeckSource(
+          currentListType,
+          tableState.activePacks
+        );
+      }
+
       return currentListType === "black" ? blackCards : whiteCards;
     }
 
@@ -6288,10 +6533,15 @@ Content revision v34.9.5.1:
         String(currentListType === "white")
       );
 
+      const contextLabel =
+        listBrowserDeckContext === "table"
+          ? "חפיסת השולחן — "
+          : "";
+
       listBrowserTitle.textContent =
         currentListType === "black"
-          ? "רשימת הקלפים השחורים"
-          : "רשימת הקלפים הלבנים";
+          ? `${contextLabel}הקלפים השחורים`
+          : `${contextLabel}הקלפים הלבנים`;
 
       renderListBrowser();
     }
@@ -6322,7 +6572,10 @@ Content revision v34.9.5.1:
       listBrowserItems.hidden = visibleListCards.length === 0;
     }
 
-    function openListBrowser(type) {
+    function openListBrowser(type, context = "regular") {
+      listBrowserDeckContext = context === "table"
+        ? "table"
+        : "regular";
       setListType(type);
       listSearch.value = "";
       renderListBrowser();
@@ -6338,6 +6591,7 @@ Content revision v34.9.5.1:
       listBrowserModal.classList.remove("is-open");
       listBrowserModal.hidden = true;
       listSearch.value = "";
+      listBrowserDeckContext = "regular";
       syncModalOpenState();
       restoreModalTrigger(listBrowserModal);
     }
@@ -6396,10 +6650,18 @@ Content revision v34.9.5.1:
           installed || !available || !tableInstallScreenIsVisible();
         tableInstallButton.disabled = !available;
       }
+
+      if (tableSettingsInstallButton) {
+        tableSettingsInstallButton.hidden = installed || !available;
+        tableSettingsInstallButton.disabled = !available;
+        tableSettingsInstallState.textContent = installed
+          ? "מותקן"
+          : available ? "למסך הבית" : "לא זמין";
+      }
     }
 
     function setInstallButtonsDisabled(disabled) {
-      [installAppButton, tableInstallButton]
+      [installAppButton, tableInstallButton, tableSettingsInstallButton]
         .filter(Boolean)
         .forEach((button) => { button.disabled = disabled; });
     }
@@ -6430,6 +6692,9 @@ Content revision v34.9.5.1:
 
         if (choice.outcome === "accepted") {
           closeSettings();
+          if (typeof closeTableSettings === "function") {
+            closeTableSettings();
+          }
           showInstallFeedback("המשחק נוסף למסך הבית", 2600);
         } else {
           showInstallFeedback("ההתקנה בוטלה", 1800);
@@ -6469,40 +6734,55 @@ Content revision v34.9.5.1:
       return "supported";
     }
 
-    function updateWakeLockUi() {
+    function updateWakeLockTarget(toggle, state, description) {
+      if (!toggle || !state || !description) return;
+
       const support = wakeLockSupportStatus();
 
       if (wakeLockWanted && wakeLockSentinel) {
-        wakeLockToggle.setAttribute("aria-checked", "true");
-        wakeLockToggle.setAttribute("aria-disabled", "false");
-        wakeLockState.textContent = "פעיל";
-        wakeLockDescription.textContent =
+        toggle.setAttribute("aria-checked", "true");
+        toggle.setAttribute("aria-disabled", "false");
+        state.textContent = "פעיל";
+        description.textContent =
           "המסך יישאר דולק כל עוד המשחק פתוח";
         return;
       }
 
-      wakeLockToggle.setAttribute("aria-checked", "false");
+      toggle.setAttribute("aria-checked", "false");
 
       if (support === "insecure") {
-        wakeLockToggle.setAttribute("aria-disabled", "true");
-        wakeLockState.textContent = "דורש HTTPS";
-        wakeLockDescription.textContent =
+        toggle.setAttribute("aria-disabled", "true");
+        state.textContent = "דורש HTTPS";
+        description.textContent =
           "זמין לאחר העלאת המשחק לאתר HTTPS או התקנתו כאפליקציה";
         return;
       }
 
       if (support === "unsupported") {
-        wakeLockToggle.setAttribute("aria-disabled", "true");
-        wakeLockState.textContent = "לא נתמך";
-        wakeLockDescription.textContent =
+        toggle.setAttribute("aria-disabled", "true");
+        state.textContent = "לא נתמך";
+        description.textContent =
           "הדפדפן הזה אינו תומך בתכונה";
         return;
       }
 
-      wakeLockToggle.setAttribute("aria-disabled", "false");
-      wakeLockState.textContent = "כבוי";
-      wakeLockDescription.textContent =
+      toggle.setAttribute("aria-disabled", "false");
+      state.textContent = "כבוי";
+      description.textContent =
         "מונע מהמסך להיכבות בזמן המשחק";
+    }
+
+    function updateWakeLockUi() {
+      updateWakeLockTarget(
+        wakeLockToggle,
+        wakeLockState,
+        wakeLockDescription
+      );
+      updateWakeLockTarget(
+        tableWakeLockToggle,
+        tableWakeLockState,
+        tableWakeLockDescription
+      );
     }
 
     async function acquireWakeLock() {
@@ -6790,7 +7070,7 @@ Content revision v34.9.5.1:
       );
     });
 
-    wakeLockToggle.addEventListener("click", async () => {
+    async function toggleWakeLockPreference() {
       const support = wakeLockSupportStatus();
 
       if (support !== "supported") {
@@ -6803,7 +7083,17 @@ Content revision v34.9.5.1:
       } else {
         await acquireWakeLock();
       }
-    });
+    }
+
+    wakeLockToggle.addEventListener(
+      "click",
+      toggleWakeLockPreference
+    );
+
+    tableWakeLockToggle?.addEventListener(
+      "click",
+      toggleWakeLockPreference
+    );
 
     installAppButton?.addEventListener(
       "click",
@@ -6811,6 +7101,11 @@ Content revision v34.9.5.1:
     );
 
     tableInstallButton?.addEventListener(
+      "click",
+      promptAppInstallation
+    );
+
+    tableSettingsInstallButton?.addEventListener(
       "click",
       promptAppInstallation
     );
@@ -7328,6 +7623,14 @@ Content revision v34.9.5.1:
       renderDeckLists();
       showRandomBlack();
       saveState();
+
+      if (typeof tableState !== "undefined" && tableState) {
+        resetTableCardsForPacks(
+          tableState.activePacks,
+          { preserveScore: true }
+        );
+      }
+
       scheduleAdaptiveLayout({
         preserveAnchor: false
       });
@@ -7442,6 +7745,10 @@ Content revision v34.9.5.1:
         if (!houseRulesModal.hidden) closeRulesModal(houseRulesModal);
         if (!deckEditorModal.hidden) closeEditor();
         if (!settingsOverlay.hidden) closeSettings();
+        if (!tableSettingsOverlay.hidden) {
+          closeTableSettings();
+          event.preventDefault();
+        }
         if (!listBrowserModal.hidden) closeListBrowser();
       }
     });
@@ -8181,6 +8488,7 @@ Content revision v34.9.5.1:
     const tableExitButton = document.getElementById("tableExitButton");
     const tableStatus = document.getElementById("tableStatus");
     const tableRoleScreen = document.getElementById("tableRoleScreen");
+    const tableRoleDeckSummary = document.getElementById("tableRoleDeckSummary");
     const tableCzarScreen = document.getElementById("tableCzarScreen");
     const tablePlayerScreen = document.getElementById("tablePlayerScreen");
     const tablePlayerName = document.getElementById("tablePlayerName");
@@ -8272,13 +8580,14 @@ Content revision v34.9.5.1:
       };
     }
 
-    function tableDeck(type) {
+    function tableDeckSource(type, expansionIds = []) {
       const activeIds = new Set(
-        validExpansionIds(tableState?.activePacks || [])
+        validExpansionIds(expansionIds)
       );
       const activePacks = availableExpansionPacks()
         .filter((pack) => activeIds.has(pack.id));
-      const source = type === "black"
+
+      return type === "black"
         ? uniqueDeck([
             ...baseBlackCards,
             ...activePacks.flatMap((pack) =>
@@ -8291,7 +8600,24 @@ Content revision v34.9.5.1:
               normalizeWhiteDeck(pack.whiteCards)
             )
           ]);
+    }
 
+    function tableDeckMetrics(expansionIds = []) {
+      const black = tableDeckSource("black", expansionIds).length;
+      const white = tableDeckSource("white", expansionIds).length;
+
+      return {
+        black,
+        white,
+        total: black + white
+      };
+    }
+
+    function tableDeck(type) {
+      const source = tableDeckSource(
+        type,
+        tableState?.activePacks || []
+      );
       const idCounts = new Map();
 
       return source.map((rawCard) => {
@@ -8536,6 +8862,216 @@ Content revision v34.9.5.1:
       renderTableRoleScreen();
     }
 
+
+    let pendingTableExpansionIds = [];
+    let tableResetArmed = false;
+    let tableResetTimer = 0;
+
+    function sortedExpansionIds(ids) {
+      return validExpansionIds(ids).sort();
+    }
+
+    function sameExpansionIds(left, right) {
+      return JSON.stringify(sortedExpansionIds(left)) ===
+        JSON.stringify(sortedExpansionIds(right));
+    }
+
+    function tableExpansionLabel(ids) {
+      const count = validExpansionIds(ids).length;
+
+      if (count === 0) return "חבילת הבסיס";
+      if (count === 1) return "הרחבה פעילה אחת";
+      return `${count} הרחבות פעילות`;
+    }
+
+    function renderTableDeckSummary() {
+      if (!tableState) return;
+
+      const ids = validExpansionIds(tableState.activePacks);
+      const metrics = tableDeckMetrics(ids);
+      const label = tableExpansionLabel(ids);
+
+      tableRoleDeckSummary.textContent =
+        `חפיסת שולחן: ${label} · ${metrics.total} קלפים`;
+      tableCardBrowserSummary.textContent =
+        `${metrics.black} שחורים · ${metrics.white} לבנים`;
+      tableSettingsFooterSummary.textContent =
+        `גרסה 34.10 · ${metrics.total} קלפים פעילים`;
+    }
+
+    function createTableExpansionPackButton(pack, options = {}) {
+      const button = document.createElement("button");
+      const isBase = Boolean(options.isBase);
+      const hasCards = isBase || expansionHasCards(pack);
+      const isActive = isBase || pendingTableExpansionIds.includes(pack.id);
+
+      button.type = "button";
+      button.className = "expansion-pack";
+      button.setAttribute("role", "switch");
+      button.setAttribute("aria-checked", String(isActive));
+      button.setAttribute("aria-disabled", String(isBase || !hasCards));
+
+      if (!isBase && hasCards) {
+        button.dataset.tablePackId = pack.id;
+      }
+
+      const copy = document.createElement("span");
+      copy.className = "expansion-pack-copy";
+
+      const name = document.createElement("span");
+      name.className = "expansion-pack-name";
+      name.textContent = isBase ? "חבילת הבסיס" : pack.name;
+
+      const meta = document.createElement("span");
+      meta.className = "expansion-pack-meta";
+      meta.textContent = isBase
+        ? `${baseWhiteCards.length} לבנים · ${baseBlackCards.length} שחורים · תמיד פעילה`
+        : hasCards
+          ? `${pack.whiteCards.length} לבנים · ${pack.blackCards.length} שחורים · ${pack.description}`
+          : `${plannedPackCardCount(pack)} קלפים מתוכננים · ${pack.description}`;
+
+      const state = document.createElement("span");
+      state.className = "expansion-pack-state";
+      state.textContent = isBase
+        ? "פעילה"
+        : !hasCards
+          ? "בקרוב"
+          : isActive ? "פעילה" : "כבויה";
+
+      copy.append(name, meta);
+      button.append(copy, state);
+      return button;
+    }
+
+    function renderTableExpansionControls() {
+      if (!tableState) return;
+
+      pendingTableExpansionIds = validExpansionIds(
+        pendingTableExpansionIds
+      );
+      tableExpansionPackList.replaceChildren();
+      tableExpansionPackList.appendChild(
+        createTableExpansionPackButton(
+          {
+            id: "base",
+            name: "חבילת הבסיס",
+            blackCards: baseBlackCards,
+            whiteCards: baseWhiteCards
+          },
+          { isBase: true }
+        )
+      );
+
+      EXPANSION_PACKS.forEach((pack) => {
+        tableExpansionPackList.appendChild(
+          createTableExpansionPackButton(pack)
+        );
+      });
+
+      const metrics = tableDeckMetrics(pendingTableExpansionIds);
+      const label = tableExpansionLabel(pendingTableExpansionIds);
+      const changed = !sameExpansionIds(
+        pendingTableExpansionIds,
+        tableState.activePacks
+      );
+
+      tableExpansionQuickActions.hidden =
+        availableExpansionPacks().length === 0;
+      tableExpansionMenuSummary.textContent =
+        `${label} · ${metrics.total} קלפים`;
+      tableExpansionSummary.textContent =
+        `${metrics.total} קלפים: ${metrics.black} שחורים ו-${metrics.white} לבנים.`;
+      tableDeckChangeNotice.hidden = !changed;
+      tableApplyDeckChanges.disabled = !changed;
+    }
+
+    function setTableExpansionPanelOpen(open) {
+      tableExpansionPanel.hidden = !open;
+      tableExpansionPanelToggle.setAttribute(
+        "aria-expanded",
+        String(open)
+      );
+    }
+
+    function clearTableResetConfirmation() {
+      tableResetArmed = false;
+      clearTimeout(tableResetTimer);
+      tableResetGameButton.classList.remove("is-confirming");
+      tableResetGameLabel.textContent = "↻ איפוס משחק השולחן";
+    }
+
+    function resetTableCardsForPacks(
+      expansionIds,
+      { preserveScore = true } = {}
+    ) {
+      if (!tableState) return;
+
+      const score = preserveScore
+        ? tableState.player.score
+        : 0;
+
+      tableState.activePacks = validExpansionIds(expansionIds);
+      tableState.player.hand = [];
+      tableState.player.usedWhite = [];
+      tableState.player.selected = [];
+      tableState.player.pickCount = 1;
+      tableState.player.view = "hand";
+      tableState.player.score = score;
+      tableState.czar.currentBlack = null;
+      tableState.czar.usedBlack = [];
+      tableCurrentHandIndex = 0;
+
+      ensureTableHand();
+      ensureTableBlackCard();
+      saveTableState();
+      renderTableRoleScreen();
+    }
+
+    function openTableSettings() {
+      pendingTableExpansionIds = [
+        ...validExpansionIds(tableState.activePacks)
+      ];
+      clearTableResetConfirmation();
+      setTableExpansionPanelOpen(false);
+      renderTableExpansionControls();
+      renderTableDeckSummary();
+      updateWakeLockUi();
+      updateInstallAppUi();
+
+      rememberModalTrigger(tableSettingsOverlay);
+      tableSettingsOverlay.hidden = false;
+      tableSettingsOverlay.classList.add("is-open");
+      syncModalOpenState();
+      focusInsideModal(tableSettingsOverlay, tableSettingsClose);
+    }
+
+    function closeTableSettings() {
+      if (!tableSettingsOverlay || tableSettingsOverlay.hidden) return;
+
+      pendingTableExpansionIds = [
+        ...validExpansionIds(tableState?.activePacks || [])
+      ];
+      clearTableResetConfirmation();
+      tableSettingsOverlay.classList.remove("is-open");
+      tableSettingsOverlay.hidden = true;
+      syncModalOpenState();
+      restoreModalTrigger(tableSettingsOverlay);
+    }
+
+    function applyPendingTableDeck() {
+      if (sameExpansionIds(
+        pendingTableExpansionIds,
+        tableState.activePacks
+      )) return;
+
+      resetTableCardsForPacks(
+        pendingTableExpansionIds,
+        { preserveScore: true }
+      );
+      closeTableSettings();
+      tableSetStatus("חפיסת השולחן עודכנה והיד חולקה מחדש", 2800);
+    }
+
     function closeModeSelection() {
       modeSelectOverlay.classList.remove("is-open");
       modeSelectOverlay.hidden = true;
@@ -8543,6 +9079,7 @@ Content revision v34.9.5.1:
     }
 
     function closeTableApp() {
+      closeTableSettings();
       tableAppOverlay.classList.remove("is-open");
       tableAppOverlay.hidden = true;
       document.body.classList.remove("table-mode-active");
@@ -8551,6 +9088,7 @@ Content revision v34.9.5.1:
 
     function showModeSelection() {
       closeSettings();
+      closeTableSettings();
       closeTableApp();
       modeSelectOverlay.hidden = false;
       modeSelectOverlay.classList.add("is-open");
@@ -8559,6 +9097,7 @@ Content revision v34.9.5.1:
     }
 
     function activateRegularMode() {
+      closeTableSettings();
       closeModeSelection();
       closeTableApp();
       document.body.classList.remove("table-mode-active");
@@ -8586,6 +9125,11 @@ Content revision v34.9.5.1:
       tableCzarScreen.hidden = screen !== "czar";
       tablePlayerScreen.hidden = screen !== "player";
       tableRoleButton.hidden = screen === "role";
+      tableSettingsButton.hidden = screen !== "role";
+
+      if (screen !== "role") {
+        closeTableSettings();
+      }
 
       if (tableFullscreenButton) {
         const isPlayerScreen = screen === "player";
@@ -8659,6 +9203,7 @@ Content revision v34.9.5.1:
     function renderTableRoleScreen() {
       if (!tableState) return;
       tablePlayerName.value = tableState.playerName;
+      renderTableDeckSummary();
     }
 
     function enterTablePlayer() {
@@ -9021,6 +9566,99 @@ Content revision v34.9.5.1:
       renderTablePlayerIdentity();
     }
 
+    tableSettingsButton.addEventListener("click", openTableSettings);
+    tableSettingsClose.addEventListener("click", closeTableSettings);
+
+    tableSettingsOverlay.addEventListener("click", (event) => {
+      if (event.target === tableSettingsOverlay) {
+        closeTableSettings();
+      }
+    });
+
+    tableExpansionPanelToggle.addEventListener("click", () => {
+      setTableExpansionPanelOpen(tableExpansionPanel.hidden);
+    });
+
+    tableExpansionPackList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-table-pack-id]");
+      if (!button) return;
+
+      const packId = button.dataset.tablePackId;
+      const next = new Set(pendingTableExpansionIds);
+      if (next.has(packId)) next.delete(packId);
+      else next.add(packId);
+      pendingTableExpansionIds = [...next];
+      renderTableExpansionControls();
+    });
+
+    tableBaseOnlyPacks.addEventListener("click", () => {
+      pendingTableExpansionIds = [];
+      renderTableExpansionControls();
+    });
+
+    tableAllPacks.addEventListener("click", () => {
+      pendingTableExpansionIds = availableExpansionPacks()
+        .map((pack) => pack.id);
+      renderTableExpansionControls();
+    });
+
+    tableApplyDeckChanges.addEventListener(
+      "click",
+      applyPendingTableDeck
+    );
+
+    tableCancelDeckChanges.addEventListener("click", () => {
+      pendingTableExpansionIds = [
+        ...validExpansionIds(tableState.activePacks)
+      ];
+      renderTableExpansionControls();
+    });
+
+    tableRegularModeButton.addEventListener("click", () => {
+      closeTableSettings();
+      activateRegularMode();
+    });
+
+    tableResetGameButton.addEventListener("click", () => {
+      if (!tableResetArmed) {
+        tableResetArmed = true;
+        tableResetGameButton.classList.add("is-confirming");
+        tableResetGameLabel.textContent = "לחץ שוב כדי לאפס יד, קלפים וניקוד";
+        tableResetTimer = setTimeout(
+          clearTableResetConfirmation,
+          4200
+        );
+        return;
+      }
+
+      resetTableCardsForPacks(
+        tableState.activePacks,
+        { preserveScore: false }
+      );
+      closeTableSettings();
+      tableSetStatus("משחק השולחן אופס", 2200);
+    });
+
+    tableOpenCardBrowser.addEventListener("click", () => {
+      closeTableSettings();
+      openListBrowser(currentListType, "table");
+    });
+
+    tableDeckEditorButton.addEventListener("click", () => {
+      closeTableSettings();
+      openEditor();
+    });
+
+    tableBasicRulesButton.addEventListener("click", () => {
+      closeTableSettings();
+      openRulesModal(basicRulesModal);
+    });
+
+    tableHouseRulesButton.addEventListener("click", () => {
+      closeTableSettings();
+      openRulesModal(houseRulesModal);
+    });
+
     modeRegularButton.addEventListener("click", activateRegularMode);
     modeTableButton.addEventListener("click", openTableApp);
     tableModeMenuButton.addEventListener("click", openTableApp);
@@ -9100,7 +9738,7 @@ Content revision v34.9.5.1:
     });
 
     document.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || event.defaultPrevented) return;
 
       if (!modeSelectOverlay.hidden) {
         activateRegularMode();
