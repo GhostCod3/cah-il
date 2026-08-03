@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.9.3:
-- Adds an icon-only fullscreen control to every player view
-- Keeps the labeled fullscreen control on role selection and czar screens
-- Raises the player fullscreen control above the sticky answer actions when needed
-- Standardizes restrained press feedback and keyboard focus across table-mode actions
-- Performs final mobile safe-area and viewport checks before freezing the UI
-- Preserves offline table state, classic mode and all 1,040 cards
+Content revision v34.9.3.2:
+- Aligns the player fullscreen control to the same lower baseline in hand, submitted and reveal views
+- Removes the unnecessary raised offset from the hidden-answer screens
+- Preserves all v34.9.3.1 behavior, offline state, classic mode and all 1,040 cards
 - Internal deck content version remains 33.6
 -->
 
@@ -28,8 +25,8 @@ Content revision v34.9.3:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.3" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.3" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.3.2" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.3.2" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -39,7 +36,7 @@ Content revision v34.9.3:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.3" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.3.2" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2234,7 +2231,7 @@ Content revision v34.9.3:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.9.3
+       Offline table game — v34.9.3.2
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -2537,7 +2534,7 @@ Content revision v34.9.3:
     }
 
     .table-overlay-fullscreen.is-raised {
-      bottom: calc(104px + env(safe-area-inset-bottom));
+      bottom: calc(74px + env(safe-area-inset-bottom));
     }
 
     .table-role-panel {
@@ -3315,7 +3312,7 @@ Content revision v34.9.3:
       }
 
       .table-overlay-fullscreen.is-raised {
-        bottom: calc(100px + env(safe-area-inset-bottom));
+        bottom: calc(70px + env(safe-area-inset-bottom));
       }
 
       .table-overlay-fullscreen .table-overlay-fullscreen-label {
@@ -4024,7 +4021,7 @@ Content revision v34.9.3:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.9.3 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.9.3.2 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -6698,6 +6695,7 @@ Content revision v34.9.3:
 
     const previousRoundButton=document.getElementById("previousRound");
     const fullscreenButton=document.getElementById("fullscreenButton");
+    const modeFullscreenButton=document.getElementById("modeFullscreenButton");
 
     const contentGate = document.getElementById("contentGate");
     const contentGateWarning =
@@ -7054,21 +7052,23 @@ Content revision v34.9.3:
       }
     );
 
-    modeFullscreenButton.addEventListener(
-      "pointerup",
-      (event) => {
-        if (event.pointerType === "touch") {
+    if (modeFullscreenButton) {
+      modeFullscreenButton.addEventListener(
+        "pointerup",
+        (event) => {
+          if (event.pointerType === "touch") {
+            runFullscreenButtonGesture(event);
+          }
+        }
+      );
+
+      modeFullscreenButton.addEventListener(
+        "click",
+        (event) => {
           runFullscreenButtonGesture(event);
         }
-      }
-    );
-
-    modeFullscreenButton.addEventListener(
-      "click",
-      (event) => {
-        runFullscreenButtonGesture(event);
-      }
-    );
+      );
+    }
 
     async function handleGameFullscreenChange() {
       const active = Boolean(gameFullscreenElement());
@@ -8026,7 +8026,6 @@ Content revision v34.9.3:
     const modeSelectOverlay = document.getElementById("modeSelectOverlay");
     const modeRegularButton = document.getElementById("modeRegularButton");
     const modeTableButton = document.getElementById("modeTableButton");
-    const modeFullscreenButton = document.getElementById("modeFullscreenButton");
     const tableAppOverlay = document.getElementById("tableAppOverlay");
     const tableAppTitle = document.getElementById("tableAppTitle");
     const tableEyebrow = document.getElementById("tableEyebrow");
