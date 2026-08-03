@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 <!--
-Content revision v32.32:
-- Moves browser fullscreen entry to the tap's pointerup event on touch devices
-- Keeps keyboard activation through the normal click event
-- Requests fullscreen on the body element with standard and legacy fallbacks
-- Detects blocked or embedded browser contexts and displays a precise explanation
-- Applies the same direct-gesture flow to the floating fullscreen control
-- Updates the offline cache to v32.32
-- Preserves all cards, migrations, PWA installation, menu layout and animations
-- UI-only release: internal deck content version remains 33.6
-- Final size with every expansion active remains 256 black / 784 white / 1040 total
+Content revision v34.9.3:
+- Adds an icon-only fullscreen control to every player view
+- Keeps the labeled fullscreen control on role selection and czar screens
+- Raises the player fullscreen control above the sticky answer actions when needed
+- Standardizes restrained press feedback and keyboard focus across table-mode actions
+- Performs final mobile safe-area and viewport checks before freezing the UI
+- Preserves offline table state, classic mode and all 1,040 cards
+- Internal deck content version remains 33.6
 -->
 
 <html lang="he" dir="rtl">
@@ -30,8 +28,8 @@ Content revision v32.32:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.32" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.32" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.3" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.3" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -41,7 +39,7 @@ Content revision v32.32:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=32.32" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.9.3" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2224,9 +2222,1226 @@ Content revision v32.32:
         outline: 3px solid rgba(247,247,243,.72);
         outline-offset: 4px;
       }
+
+      .table-selection-summary.is-empty,
+      .table-selection-order.is-popping,
+      .table-player-card.selection-confirmed {
+        animation: none;
+        opacity: 1;
+      }
     }
 
-</style>
+
+
+    /* ------------------------------------------------------------------
+       Offline table game — v34.9.3
+       ------------------------------------------------------------------ */
+    body.table-mode-active {
+      overflow: hidden;
+    }
+
+    body.table-mode-active > .app,
+    body.table-mode-active > #roundActionButton,
+    body.table-mode-active > #settingsButton {
+      display: none !important;
+    }
+
+    .mode-select-overlay,
+    .table-app-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 7200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: max(18px, env(safe-area-inset-top))
+               max(18px, env(safe-area-inset-right))
+               max(18px, env(safe-area-inset-bottom))
+               max(18px, env(safe-area-inset-left));
+      background:
+        radial-gradient(circle at top, #242424 0%, #111 48%, #070707 100%);
+    }
+
+    .mode-select-overlay.is-open,
+    .table-app-overlay.is-open {
+      display: flex;
+    }
+
+    .mode-select-overlay {
+      padding-bottom:
+        calc(82px + env(safe-area-inset-bottom));
+    }
+
+    .mode-select-fullscreen {
+      position: fixed;
+      left: max(18px, env(safe-area-inset-left));
+      bottom: max(18px, env(safe-area-inset-bottom));
+      z-index: 6;
+    }
+
+    .mode-select-card {
+      width: min(100%, 720px);
+      padding: clamp(24px, 5vw, 44px);
+      border: 1px solid #343434;
+      border-radius: 28px;
+      background: rgba(20, 20, 20, .97);
+      box-shadow: 0 28px 100px rgba(0, 0, 0, .62);
+      text-align: center;
+    }
+
+    .mode-select-kicker,
+    .table-eyebrow {
+      margin: 0 0 8px;
+      color: #a9a9a4;
+      font-size: .82rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .mode-select-card h2 {
+      margin: 0;
+      font-size: clamp(2rem, 7vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -.045em;
+    }
+
+    .mode-select-copy {
+      max-width: 560px;
+      margin: 18px auto 0;
+      color: #c8c8c2;
+      font-size: 1rem;
+      line-height: 1.62;
+    }
+
+    .mode-choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .mode-choice {
+      min-height: 172px;
+      padding: 22px;
+      border: 1px solid #3a3a3a;
+      border-radius: 22px;
+      background: #242424;
+      color: #fff;
+      text-align: right;
+    }
+
+    .mode-choice.primary {
+      background: #f7f7f3;
+      color: #111;
+      border-color: #f7f7f3;
+    }
+
+    .mode-choice strong,
+    .table-role-choice strong {
+      display: block;
+      font-size: 1.28rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .mode-choice span,
+    .table-role-choice span {
+      display: block;
+      margin-top: 8px;
+      color: inherit;
+      font-size: .92rem;
+      font-weight: 400;
+      line-height: 1.48;
+      opacity: .74;
+    }
+
+    .mode-select-note {
+      margin: 18px 0 0;
+      color: #858580;
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+
+    .table-app-overlay {
+      z-index: 7100;
+      align-items: stretch;
+      padding: 0;
+    }
+
+    .table-app-shell {
+      width: min(100%, 1180px);
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding:
+        max(18px, env(safe-area-inset-top))
+        max(18px, env(safe-area-inset-right))
+        max(24px, env(safe-area-inset-bottom))
+        max(18px, env(safe-area-inset-left));
+      display: flex;
+      flex-direction: column;
+    }
+
+    .table-toolbar {
+      position: sticky;
+      top: max(0px, env(safe-area-inset-top));
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: -8px -4px 12px;
+      padding: 8px 4px 12px;
+      background:
+        linear-gradient(
+          to bottom,
+          rgba(17,17,17,.98) 0%,
+          rgba(17,17,17,.95) 78%,
+          rgba(17,17,17,0) 100%
+        );
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .table-toolbar h2 {
+      margin: 0;
+      font-size: clamp(1.55rem, 4.8vw, 2.35rem);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -.035em;
+    }
+
+    .table-toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: nowrap;
+      justify-content: flex-end;
+      white-space: nowrap;
+    }
+
+    .table-small-button,
+    .table-icon-button {
+      min-height: 42px;
+      padding: 10px 13px;
+      border: 1px solid #3a3a3a;
+      border-radius: 13px;
+      background: #242424;
+      color: #fff;
+      font-size: .86rem;
+      font-weight: 650;
+    }
+
+    .table-small-button {
+      flex: 0 1 auto;
+      min-height: 38px;
+      padding: 8px 11px;
+      border-radius: 11px;
+      font-size: .8rem;
+      white-space: nowrap;
+      transition:
+        transform .14s ease,
+        background .14s ease;
+    }
+
+    .table-small-button:active,
+    .table-pick-toggle button:active {
+      transform: scale(.95);
+    }
+
+    .table-icon-button {
+      min-width: 46px;
+      padding-inline: 12px;
+      font-size: 1.2rem;
+    }
+
+    .table-status {
+      position: fixed;
+      left: 50%;
+      bottom: calc(88px + env(safe-area-inset-bottom));
+      z-index: 60;
+      transform: translateX(-50%);
+      width: max-content;
+      max-width: calc(100vw - 40px);
+      min-height: 0;
+      margin: 0;
+      padding: 9px 13px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      background: rgba(18,18,18,.92);
+      color: #eee;
+      font-size: .84rem;
+      text-align: center;
+      box-shadow: 0 8px 28px rgba(0,0,0,.38);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
+    .table-status:empty {
+      display: none;
+    }
+
+    .table-screen {
+      flex: 1;
+      width: 100%;
+    }
+
+    .table-screen[hidden],
+    .table-player-view[hidden] {
+      display: none !important;
+    }
+
+    .table-overlay-fullscreen {
+      position: fixed;
+      left: max(18px, env(safe-area-inset-left));
+      bottom: max(18px, env(safe-area-inset-bottom));
+      z-index: 52;
+      width: auto;
+      min-width: 48px;
+      height: 48px;
+      padding: 0 14px 0 12px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .table-overlay-fullscreen[hidden] {
+      display: none !important;
+    }
+
+    .table-overlay-fullscreen .table-overlay-fullscreen-label {
+      font-size: .82rem;
+      font-weight: 750;
+      white-space: nowrap;
+      letter-spacing: -.01em;
+    }
+
+    .table-overlay-fullscreen.is-icon-only {
+      width: 48px;
+      min-width: 48px;
+      height: 48px;
+      padding: 0;
+      gap: 0;
+      border-radius: 50%;
+      bottom: calc(74px + env(safe-area-inset-bottom));
+    }
+
+    .table-overlay-fullscreen.is-icon-only
+      .table-overlay-fullscreen-label {
+      display: none;
+    }
+
+    .table-overlay-fullscreen.is-raised {
+      bottom: calc(104px + env(safe-area-inset-bottom));
+    }
+
+    .table-role-panel {
+      width: min(100%, 760px);
+      margin: clamp(4px, 1.8vh, 14px) auto 0;
+      padding: clamp(20px, 4.7vw, 34px);
+      border: 1px solid #343434;
+      border-radius: 26px;
+      background: rgba(21, 21, 21, .96);
+      box-shadow: 0 24px 80px rgba(0,0,0,.46);
+    }
+
+    .table-role-panel h3 {
+      margin: 0;
+      font-size: clamp(1.7rem, 6vw, 2.65rem);
+      font-weight: 800;
+      line-height: 1.08;
+    }
+
+    .table-role-panel > p {
+      margin: 10px 0 0;
+      color: #aaa;
+      font-size: clamp(.88rem, 2.4vw, .96rem);
+      line-height: 1.42;
+    }
+
+    .table-name-field {
+      display: grid;
+      gap: 7px;
+      margin-top: 22px;
+    }
+
+    .table-name-field label {
+      color: #bdbdb8;
+      font-size: .82rem;
+      font-weight: 600;
+    }
+
+    .table-name-field input {
+      width: 100%;
+      min-height: 50px;
+      padding: 12px 14px;
+      border: 1px solid #3b3b3b;
+      border-radius: 14px;
+      background: #101010;
+      color: #fff;
+      font: 500 1rem/1.4 "Noto Sans Hebrew", Arial, sans-serif;
+      direction: rtl;
+    }
+
+    .table-role-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 13px;
+      margin-top: 20px;
+    }
+
+    .table-role-choice {
+      min-height: 150px;
+      padding: 20px;
+      border: 1px solid #3a3a3a;
+      border-radius: 20px;
+      background: #252525;
+      color: #fff;
+      text-align: right;
+    }
+
+    .table-role-choice.player {
+      background: #f7f7f3;
+      color: #111;
+      border-color: #f7f7f3;
+    }
+
+    .table-role-footer {
+      display: none;
+    }
+
+    .table-link-button {
+      padding: 10px 12px;
+      background: transparent;
+      color: #aaa;
+      border: 0;
+      font-size: .86rem;
+      font-weight: 550;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    .table-czar-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 620px) minmax(230px, 340px);
+      justify-content: center;
+      align-items: center;
+      gap: clamp(18px, 4vw, 44px);
+      min-height: calc(100dvh - 130px);
+    }
+
+    .table-card {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 5 / 7;
+      padding: clamp(22px, 5vw, 38px);
+      border-radius: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 22px 70px rgba(0,0,0,.48);
+      user-select: none;
+    }
+
+    .table-card.black {
+      background: #050505;
+      color: #fff;
+      border: 1px solid #292929;
+    }
+
+    .table-card.white {
+      background: #f7f7f3;
+      color: #111;
+      border: 1px solid #d6d6d0;
+    }
+
+    .table-card-text {
+      font-size: clamp(1.65rem, 5vw, 3.25rem);
+      font-weight: 750;
+      line-height: 1.2;
+      letter-spacing: -.025em;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+
+    .table-card .choose-two {
+      align-self: flex-start;
+      margin: auto 0 14px;
+    }
+
+    .table-czar-card {
+      justify-content: flex-start;
+    }
+
+    .table-czar-card .table-card-text {
+      width: 100%;
+    }
+
+    .table-czar-card .brand {
+      margin-top: auto;
+    }
+
+    .table-czar-card .choose-two {
+      margin: auto 0 88px;
+    }
+
+    .table-czar-submit {
+      position: absolute;
+      left: 50%;
+      bottom: 66px;
+      z-index: 5;
+      width: 58px;
+      height: 58px;
+      min-width: 58px;
+      min-height: 58px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(247,247,243,.97);
+      color: #111;
+      box-shadow: 0 12px 34px rgba(0,0,0,.45);
+      transform: translateX(-50%);
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    .table-czar-submit svg {
+      width: 27px;
+      height: 27px;
+      display: block;
+      pointer-events: none;
+    }
+
+    .table-czar-submit:hover {
+      background: #fff;
+      box-shadow: 0 15px 40px rgba(0,0,0,.52);
+    }
+
+    .table-czar-submit:active {
+      transform: translateX(-50%) scale(.96);
+    }
+
+    .table-czar-submit.is-spinning svg {
+      animation: refreshSpin .38s cubic-bezier(.4,0,.2,1);
+    }
+
+    .table-side-panel {
+      padding: 0 10px 2px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      text-align: center;
+    }
+
+    .table-side-panel p {
+      margin: 0;
+      color: #aaa;
+      line-height: 1.5;
+      font-size: .9rem;
+    }
+
+    .table-primary-button,
+    .table-secondary-button {
+      width: 100%;
+      min-height: 54px;
+      margin-top: 14px;
+      padding: 13px 16px;
+      border-radius: 15px;
+      font-size: 1rem;
+      font-weight: 750;
+    }
+
+    .table-primary-button {
+      background: #f7f7f3;
+      color: #111;
+    }
+
+    .table-submit-fab .table-primary-button {
+      background: #111;
+      color: #fff;
+      border: 1px solid #1d1d1d;
+    }
+
+    .table-secondary-button {
+      background: #292929;
+      color: #fff;
+      border: 1px solid #3b3b3b;
+    }
+
+    .table-primary-button,
+    .table-secondary-button,
+    .table-overlay-fullscreen {
+      transition:
+        transform .14s ease,
+        background .16s ease,
+        border-color .16s ease,
+        box-shadow .16s ease;
+    }
+
+    .table-primary-button:not(:disabled):active,
+    .table-secondary-button:not(:disabled):active {
+      transform: scale(.97);
+    }
+
+    .table-submit-fab
+      .table-primary-button.is-visible:active {
+      transform: translateY(0) scale(.97);
+    }
+
+    .table-overlay-fullscreen:active {
+      transform: scale(.95);
+    }
+
+    .table-primary-button:focus-visible,
+    .table-secondary-button:focus-visible,
+    .table-overlay-fullscreen:focus-visible {
+      outline: 3px solid rgba(255,255,255,.88);
+      outline-offset: 3px;
+    }
+
+    .table-primary-button:disabled,
+    .table-secondary-button:disabled {
+      cursor: not-allowed;
+      opacity: .42;
+    }
+
+    .table-player-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      width: min(100%, 900px);
+      margin: 0 auto 10px;
+    }
+
+    .table-player-identity strong {
+      display: block;
+      font-size: 1.05rem;
+      font-weight: 750;
+    }
+
+    .table-player-identity span {
+      color: #8f8f8f;
+      font-size: .8rem;
+    }
+
+    .table-score-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px;
+      border: 1px solid #373737;
+      border-radius: 999px;
+      background: #1e1e1e;
+    }
+
+    .table-score-control button {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 50%;
+      background: #303030;
+      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .table-score-control strong {
+      min-width: 72px;
+      text-align: center;
+      font-size: .9rem;
+      font-weight: 650;
+    }
+
+    .table-pick-toggle {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
+      width: min(100%, 520px);
+      margin: 0 auto 9px;
+      padding: 5px;
+      border: 1px solid #373737;
+      border-radius: 16px;
+      background: #171717;
+    }
+
+    .table-pick-toggle button {
+      min-height: 43px;
+      padding: 10px;
+      border-radius: 12px;
+      background: transparent;
+      color: #aaa;
+      font-size: .88rem;
+      font-weight: 650;
+      transition:
+        transform .14s ease,
+        background .18s ease,
+        color .18s ease;
+    }
+
+    .table-pick-toggle button.is-active {
+      background: #f7f7f3;
+      color: #111;
+    }
+
+    .table-hand-stage {
+      position: relative;
+      display: grid;
+      grid-template-columns: 48px minmax(0, 520px) 48px;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .table-hand-nav {
+      --nav-shift: 0px;
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      border: 1px solid #3f3f3f;
+      border-radius: 50%;
+      background: #232323;
+      color: #fff;
+      font-size: 1.7rem;
+      line-height: 1;
+      position: relative;
+      z-index: 4;
+      box-shadow: 0 10px 28px rgba(0,0,0,.34);
+      transform: translateX(var(--nav-shift));
+      transition:
+        transform .14s ease,
+        background .14s ease,
+        border-color .14s ease,
+        box-shadow .14s ease;
+    }
+
+    #tablePrevCard {
+      --nav-shift: -8px;
+      animation: tableNavFloatPrev 2.2s ease-in-out infinite;
+    }
+
+    #tableNextCard {
+      --nav-shift: 8px;
+      animation: tableNavFloatNext 2.2s ease-in-out infinite;
+    }
+
+    @keyframes tableNavFloatPrev {
+      0%, 100% { transform: translateX(-8px); }
+      50% { transform: translateX(-13px); }
+    }
+
+    @keyframes tableNavFloatNext {
+      0%, 100% { transform: translateX(8px); }
+      50% { transform: translateX(13px); }
+    }
+
+    .table-hand-nav:hover {
+      background: #2c2c2c;
+      border-color: #545454;
+      box-shadow: 0 12px 30px rgba(0,0,0,.4);
+      animation-play-state: paused;
+    }
+
+    .table-hand-nav:active {
+      animation-play-state: paused;
+      transform: translateX(var(--nav-shift)) scale(.95);
+    }
+
+    .table-player-card {
+      cursor: pointer;
+      touch-action: pan-y;
+      transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        outline-color .18s ease;
+    }
+
+    .table-player-card.is-selected {
+      outline: 4px solid #fff;
+      outline-offset: 4px;
+      transform: translateY(-4px);
+      box-shadow:
+        0 0 0 9px rgba(255,255,255,.09),
+        0 24px 72px rgba(0,0,0,.5);
+    }
+
+    .table-player-card.selection-confirmed {
+      animation: tableCardSelectionConfirm .22s ease-out both;
+    }
+
+    @keyframes tableCardSelectionConfirm {
+      0% {
+        outline-color: rgba(255,255,255,.3);
+        box-shadow: 0 0 0 2px rgba(255,255,255,.04), 0 20px 60px rgba(0,0,0,.42);
+      }
+      55% {
+        outline-color: #fff;
+        box-shadow: 0 0 0 12px rgba(255,255,255,.12), 0 26px 76px rgba(0,0,0,.52);
+      }
+      100% {
+        outline-color: #fff;
+        box-shadow: 0 0 0 9px rgba(255,255,255,.09), 0 24px 72px rgba(0,0,0,.5);
+      }
+    }
+
+    .table-player-card,
+    .table-reveal-card {
+      justify-content: flex-start;
+    }
+
+    .table-player-card .table-card-text,
+    .table-reveal-card .table-card-text {
+      width: 100%;
+    }
+
+    .table-player-card .brand,
+    .table-reveal-card .brand {
+      margin-top: auto;
+    }
+
+    .table-selection-order {
+      position: static;
+      align-self: flex-start;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 14px;
+      border-radius: 50%;
+      background: #111;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 800;
+      box-shadow: 0 8px 20px rgba(0,0,0,.24);
+    }
+
+    .table-selection-order.is-popping {
+      animation: tableSelectPop .2s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    @keyframes tableSelectPop {
+      from { transform: scale(.75); opacity: .6; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .table-hand-counter {
+      display: none;
+    }
+
+    .table-hand-dots {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: nowrap;
+      gap: 4px;
+      width: min(100%, 388px);
+      margin: 10px auto 0;
+      overflow: hidden;
+    }
+
+    .table-hand-dot {
+      flex: 0 0 auto;
+      width: clamp(28px, 7.5vw, 34px);
+      height: clamp(28px, 7.5vw, 34px);
+      padding: 0;
+      border: 1px solid #424242;
+      border-radius: 50%;
+      background: #242424;
+      color: #aaa;
+      font-size: clamp(.72rem, 2.7vw, .82rem);
+      font-weight: 650;
+      line-height: 1;
+    }
+
+    .table-hand-dot.is-current {
+      border-color: #f7f7f3;
+      color: #fff;
+    }
+
+    .table-hand-dot.is-selected {
+      background: #f7f7f3;
+      color: #111;
+      border-color: #f7f7f3;
+    }
+
+    .table-submit-fab {
+      position: absolute;
+      inset-inline: 48px;
+      bottom: 66px;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .table-submit-fab .table-primary-button {
+      width: min(84%, 320px);
+      min-height: 52px;
+      padding-inline: 18px;
+      box-shadow: 0 18px 44px rgba(0,0,0,.34);
+      opacity: 0;
+      transform: translateY(12px) scale(.98);
+      transition:
+        opacity .18s ease,
+        transform .18s ease,
+        box-shadow .18s ease;
+      pointer-events: none;
+    }
+
+    .table-submit-fab .table-primary-button.is-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .table-selection-summary {
+      min-height: 0;
+      width: min(100%, 520px);
+      margin: 0 auto 13px;
+      padding: 10px 14px;
+      border: 1px solid #343434;
+      border-radius: 14px;
+      background: rgba(20,20,20,.82);
+      color: #c8c8c0;
+      font-size: .9rem;
+      font-weight: 560;
+      line-height: 1.45;
+      text-align: center;
+      box-shadow: 0 10px 26px rgba(0,0,0,.2);
+      transition:
+        border-color .2s ease,
+        background .2s ease,
+        color .2s ease,
+        opacity .2s ease;
+    }
+
+    .table-selection-summary.is-empty {
+      color: #f0f0e8;
+      animation: tableHintPulse 2.6s ease-in-out infinite;
+    }
+
+    .table-selection-summary.is-attention {
+      border-color: #505050;
+      color: #f0f0e8;
+    }
+
+    .table-selection-summary.is-ready {
+      border-color: #585858;
+      background: rgba(247,247,243,.07);
+      color: #fff;
+    }
+
+    @keyframes tableHintPulse {
+      0%, 100% { opacity: .72; }
+      50% { opacity: 1; }
+    }
+
+    .table-player-actions {
+      display: none;
+    }
+
+    .table-submitted-layout,
+    .table-reveal-layout {
+      width: min(100%, 820px);
+      min-height: calc(100dvh - 130px);
+      margin: 0 auto;
+      display: grid;
+      place-items: center;
+    }
+
+    .table-submission-cover {
+      width: min(100%, 520px);
+      aspect-ratio: 5 / 7;
+      padding: clamp(24px, 7vw, 44px);
+      border: 1px solid #353535;
+      border-radius: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at 50% 35%, #252525, #090909 72%);
+      box-shadow: 0 24px 80px rgba(0,0,0,.56);
+      text-align: center;
+    }
+
+    .table-submission-cover-icon {
+      display: grid;
+      place-items: center;
+      width: 72px;
+      height: 72px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      font-size: 2rem;
+    }
+
+    .table-submission-cover h3 {
+      margin: 22px 0 0;
+      font-size: clamp(1.8rem, 7vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1.05;
+    }
+
+    .table-submission-cover p {
+      margin: 12px 0 0;
+      color: #aaa;
+      line-height: 1.5;
+    }
+
+    .table-submission-actions {
+      width: 100%;
+      margin-top: 24px;
+    }
+
+    .table-reveal-layout {
+      align-content: center;
+      gap: 18px;
+    }
+
+    .table-reveal-cards {
+      display: grid;
+      grid-template-columns: minmax(0, 520px);
+      justify-content: center;
+      gap: 14px;
+      width: 100%;
+    }
+
+    .table-reveal-cards.is-double {
+      grid-template-columns: repeat(2, minmax(0, 430px));
+    }
+
+    .table-reveal-card {
+      min-height: min(66dvh, 680px);
+      aspect-ratio: auto;
+    }
+
+    .table-reveal-index {
+      position: static;
+      align-self: flex-start;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 14px;
+      border-radius: 50%;
+      background: #111;
+      color: #fff;
+      font-weight: 800;
+      box-shadow: 0 8px 20px rgba(0,0,0,.2);
+    }
+
+    .table-reveal-actions {
+      position: sticky;
+      bottom: max(10px, env(safe-area-inset-bottom));
+      z-index: 8;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      width: min(100%, 700px);
+      padding: 10px;
+      border: 1px solid #353535;
+      border-radius: 19px;
+      background: rgba(14,14,14,.94);
+      box-shadow: 0 18px 50px rgba(0,0,0,.5);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      scroll-margin-block: 18px;
+    }
+
+    .table-reveal-actions .table-primary-button,
+    .table-reveal-actions .table-secondary-button {
+      margin-top: 0;
+    }
+
+    @media (max-width: 760px) {
+      .mode-choice-grid,
+      .table-role-grid,
+      .table-czar-layout,
+      .table-reveal-cards.is-double,
+      .table-reveal-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .mode-choice {
+        min-height: 132px;
+      }
+
+      .table-toolbar {
+        align-items: flex-start;
+      }
+
+      .table-toolbar-actions {
+        max-width: none;
+        gap: 6px;
+      }
+
+      .table-small-button {
+        min-height: 36px;
+        padding: 7px 9px;
+        font-size: .76rem;
+      }
+
+      .table-role-panel {
+        margin-top: 2px;
+        padding: 18px;
+      }
+
+      .table-role-panel > p {
+        font-size: .84rem;
+        line-height: 1.38;
+      }
+
+      .table-overlay-fullscreen {
+        height: 46px;
+        padding: 0 13px 0 11px;
+        gap: 7px;
+      }
+
+      .table-overlay-fullscreen.is-icon-only {
+        width: 46px;
+        min-width: 46px;
+        height: 46px;
+        padding: 0;
+        bottom: calc(70px + env(safe-area-inset-bottom));
+      }
+
+      .table-overlay-fullscreen.is-raised {
+        bottom: calc(100px + env(safe-area-inset-bottom));
+      }
+
+      .table-overlay-fullscreen .table-overlay-fullscreen-label {
+        font-size: .78rem;
+      }
+
+      .table-player-header {
+        gap: 9px;
+        margin-bottom: 9px;
+      }
+
+      .table-czar-layout {
+        min-height: auto;
+        align-items: start;
+        gap: 14px;
+      }
+
+      .table-czar-layout .table-card {
+        max-height: 66dvh;
+        aspect-ratio: auto;
+        min-height: 58dvh;
+      }
+
+      .table-czar-submit {
+        bottom: 62px;
+        width: 54px;
+        height: 54px;
+        min-width: 54px;
+        min-height: 54px;
+      }
+
+      .table-czar-card .choose-two {
+        margin-bottom: 84px;
+      }
+
+      .table-side-panel {
+        padding: 0 8px 2px;
+      }
+
+      .table-player-header {
+        grid-template-columns: 1fr auto;
+      }
+
+      .table-hand-stage {
+        grid-template-columns: 42px minmax(0, 1fr) 42px;
+        gap: 4px;
+      }
+
+      .table-hand-nav {
+        width: 42px;
+        height: 42px;
+      }
+
+      #tablePrevCard {
+        --nav-shift: -10px;
+      }
+
+      #tableNextCard {
+        --nav-shift: 10px;
+      }
+
+      .table-submit-fab {
+        inset-inline: 36px;
+        bottom: 56px;
+      }
+
+      .table-submit-fab .table-primary-button {
+        width: min(88%, 292px);
+        min-height: 48px;
+        padding-inline: 16px;
+      }
+
+      .table-player-card {
+        min-height: min(54dvh, 560px);
+        aspect-ratio: auto;
+        padding: 24px;
+      }
+
+      .table-player-card .table-card-text {
+        font-size: clamp(1.5rem, 7.5vw, 2.2rem);
+      }
+
+      .table-selection-order,
+      .table-reveal-index {
+        width: 36px;
+        height: 36px;
+        margin-bottom: 12px;
+      }
+
+      .table-reveal-actions {
+        bottom: max(8px, env(safe-area-inset-bottom));
+        padding: 8px;
+      }
+
+      .table-selection-summary {
+        width: min(100%, 100%);
+        padding: 10px 12px;
+        font-size: .84rem;
+      }
+
+      .table-hand-dots {
+        gap: 4px;
+        width: min(100%, 344px);
+      }
+
+      .table-hand-dot {
+        width: clamp(28px, 7.6vw, 32px);
+        height: clamp(28px, 7.6vw, 32px);
+      }
+
+      .table-submitted-layout,
+      .table-reveal-layout {
+        min-height: calc(100dvh - 116px);
+      }
+
+      .table-submission-cover {
+        min-height: 65dvh;
+        aspect-ratio: auto;
+      }
+
+      .table-reveal-card {
+        min-height: 39dvh;
+      }
+    }
+
+  </style>
 </head>
 <body class="content-gate-open">
 
@@ -2293,6 +3508,265 @@ Content revision v32.32:
         </button>
       </div>
     </section>
+  </div>
+
+
+  <div
+    id="modeSelectOverlay"
+    class="mode-select-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modeSelectTitle"
+    hidden
+  >
+    <section class="mode-select-card">
+      <p class="mode-select-kicker">בחר מצב משחק</p>
+      <h2 id="modeSelectTitle">איך משחקים הערב?</h2>
+      <p class="mode-select-copy">
+        המשחק הרגיל נשאר בדיוק כפי שהוא. מצב השולחן הופך כל טלפון
+        ליד פרטית או למסך הצאר, בלי שרת ובלי אינטרנט.
+      </p>
+
+      <div class="mode-choice-grid">
+        <button id="modeRegularButton" class="mode-choice primary" type="button">
+          <strong>משחק רגיל</strong>
+          <span>קלף שחור ותשובות אקראיות על מכשיר אחד.</span>
+        </button>
+
+        <button id="modeTableButton" class="mode-choice" type="button">
+          <strong>משחק סביב השולחן</strong>
+          <span>כל שחקן מקבל יד פרטית של עשרה קלפים בטלפון שלו.</span>
+        </button>
+      </div>
+
+      <p class="mode-select-note">
+        מצב השולחן נשמר בנפרד ועובד אופליין לאחר טעינה ראשונה.
+      </p>
+    </section>
+
+    <button
+      id="modeFullscreenButton"
+      class="floating-icon mode-select-fullscreen"
+      type="button"
+      aria-label="מסך מלא"
+      title="מסך מלא"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"
+              fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <div
+    id="tableAppOverlay"
+    class="table-app-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="tableAppTitle"
+    hidden
+  >
+    <div class="table-app-shell">
+      <header class="table-toolbar">
+        <div>
+          <p id="tableEyebrow" class="table-eyebrow">משחק סביב השולחן</p>
+          <h2 id="tableAppTitle">בחירת תפקיד</h2>
+        </div>
+
+        <div class="table-toolbar-actions">
+          <button id="tableRoleButton" class="table-small-button" type="button" hidden>
+            החלף תפקיד
+          </button>
+          <button
+            id="tableExitButton"
+            class="table-small-button"
+            type="button"
+            aria-label="חזרה לבחירת מצב"
+            title="חזרה לבחירת מצב"
+          >
+            מצב
+          </button>
+        </div>
+      </header>
+
+      <div id="tableStatus" class="table-status" aria-live="polite"></div>
+
+      <section id="tableRoleScreen" class="table-screen">
+        <div class="table-role-panel">
+          <h3>מי אתה בסיבוב הזה?</h3>
+          <p>
+            אפשר להחליף תפקיד בכל רגע. היד הפרטית שלך נשמרת גם בזמן שאתה הצאר.
+          </p>
+
+          <div class="table-name-field">
+            <label for="tablePlayerName">שם לתצוגה — לא חובה</label>
+            <input
+              id="tablePlayerName"
+              type="text"
+              maxlength="40"
+              autocomplete="nickname"
+              placeholder="למשל: גל"
+            >
+          </div>
+
+          <div class="table-role-grid">
+            <button id="tableChoosePlayer" class="table-role-choice player" type="button">
+              <strong>אני שחקן</strong>
+              <span>יד פרטית של עשרה קלפים, בחירה והגשה מוסתרת.</span>
+            </button>
+
+            <button id="tableChooseCzar" class="table-role-choice" type="button">
+              <strong>אני הצאר</strong>
+              <span>קלף שחור גדול וסיבוב חדש כשהקבוצה מוכנה.</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="tableCzarScreen" class="table-screen" hidden>
+        <div class="table-czar-layout">
+          <aside class="table-side-panel">
+            <p id="tableCzarHint">
+              הקריאו את הקלף בקול. השחקנים בוחרים תשובות בטלפונים שלהם.
+            </p>
+          </aside>
+
+          <article id="tableCzarCard" class="table-card table-czar-card black">
+            <div id="tableCzarBlackText" class="table-card-text"></div>
+            <div id="tableCzarChooseTwo" class="choose-two" hidden>בחר 2</div>
+
+            <button
+              id="tableNewBlack"
+              class="table-czar-submit"
+              type="button"
+              aria-label="סיבוב חדש"
+              title="סיבוב חדש"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M20 6v5h-5"
+                      fill="none" stroke="currentColor" stroke-width="2.2"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M18.2 9A7 7 0 1 0 19 15"
+                      fill="none" stroke="currentColor" stroke-width="2.2"
+                      stroke-linecap="round"/>
+              </svg>
+            </button>
+
+            <div class="brand">
+              <span class="brand-mark" aria-hidden="true"></span>
+              <span>קלפים נגד האנושות</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="tablePlayerScreen" class="table-screen" hidden>
+        <div id="tableHandView" class="table-player-view">
+          <div class="table-player-header">
+            <div class="table-player-identity">
+              <strong id="tablePlayerDisplayName">השחקן האנונימי</strong>
+              <span id="tablePlayerMeta">10 קלפים ביד</span>
+            </div>
+
+            <div class="table-score-control" aria-label="מונה נקודות אישי">
+              <button id="tableScoreMinus" type="button" aria-label="הפחת נקודה">−</button>
+              <strong id="tableScoreValue">0 נקודות</strong>
+              <button id="tableScorePlus" type="button" aria-label="הוסף נקודה">＋</button>
+            </div>
+          </div>
+
+          <div class="table-pick-toggle" role="group" aria-label="מספר קלפים להגשה">
+            <button id="tablePickOne" type="button" class="is-active">קלף אחד</button>
+            <button id="tablePickTwo" type="button">שני קלפים</button>
+          </div>
+
+          <div id="tableSelectionSummary" class="table-selection-summary" aria-live="polite"></div>
+
+          <div class="table-hand-stage">
+            <button id="tablePrevCard" class="table-hand-nav" type="button" aria-label="קלף קודם">‹</button>
+
+            <article
+              id="tablePlayerCard"
+              class="table-card table-player-card white"
+              role="button"
+              tabindex="0"
+              aria-label="בחר את הקלף הנוכחי"
+            >
+              <span id="tableSelectionOrder" class="table-selection-order" hidden></span>
+              <div id="tablePlayerCardText" class="table-card-text"></div>
+              <div class="brand">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span>קלפים נגד האנושות</span>
+              </div>
+            </article>
+
+            <button id="tableNextCard" class="table-hand-nav" type="button" aria-label="קלף הבא">›</button>
+
+            <div class="table-submit-fab" aria-hidden="false">
+              <button id="tableSubmitAnswer" class="table-primary-button" type="button" disabled>
+                הגש תשובה
+              </button>
+            </div>
+          </div>
+
+          <div id="tableHandCounter" class="table-hand-counter"></div>
+          <div id="tableHandDots" class="table-hand-dots" aria-label="מעבר בין קלפי היד"></div>
+        </div>
+
+        <div id="tableSubmittedView" class="table-player-view" hidden>
+          <div class="table-submitted-layout">
+            <div class="table-submission-cover">
+              <div class="table-submission-cover-icon" aria-hidden="true">●</div>
+              <h3>התשובה מוכנה</h3>
+              <p id="tableSubmittedHint">
+                הניחו את הטלפונים עם המסך כלפי מעלה וערבבו את המיקומים. הצאר יחשוף את התשובות כשכולם מוכנים.
+              </p>
+
+              <div class="table-submission-actions">
+                <button id="tableRevealAnswer" class="table-primary-button" type="button">
+                  חשוף תשובה
+                </button>
+                <button id="tableSubmittedBack" class="table-secondary-button" type="button">
+                  חזור ליד
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tableRevealView" class="table-player-view" hidden>
+          <div class="table-reveal-layout">
+            <div id="tableRevealCards" class="table-reveal-cards"></div>
+
+            <div id="tableRevealActions" class="table-reveal-actions">
+              <button id="tableUseCards" class="table-primary-button" type="button">
+                השתמש והשלם יד
+              </button>
+              <button id="tableRevealBack" class="table-secondary-button" type="button">
+                חזור ליד
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <button
+        id="tableFullscreenButton"
+        class="floating-icon table-overlay-fullscreen"
+        type="button"
+        aria-label="מסך מלא"
+        title="מסך מלא"
+        hidden
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"
+                fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="table-overlay-fullscreen-label">מסך מלא</span>
+      </button>
+    </div>
   </div>
 
 
@@ -2410,6 +3884,15 @@ Content revision v32.32:
       <div class="settings-actions">
         <section class="settings-section" aria-labelledby="gameMenuSection">
           <div id="gameMenuSection" class="settings-section-title">משחק</div>
+
+          <button
+            id="tableModeMenuButton"
+            class="settings-action"
+            type="button"
+            data-close-settings="true"
+          >
+            👥 משחק סביב השולחן
+          </button>
 
           <button
             id="previousRound"
@@ -2541,7 +4024,7 @@ Content revision v32.32:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 32.32 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.9.3 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -2779,6 +4262,9 @@ Content revision v32.32:
     const CURRENT_EDITION_YEAR = new Date().getFullYear();
     const EDITION_YEAR_TOKEN = "{{YEAR}}";
     const DECK_CONTENT_VERSION = 33.6;
+    const TABLE_STORAGE_KEY = "cah-table-v34";
+    const TABLE_SCHEMA_VERSION = 1;
+    const TABLE_HAND_SIZE = 10;
 
     const LEGACY_BLACK_DECK_MARKERS = [
       "בקמפיין הבחירות החדש שלה, הממשלה מבטיחה לפתור הכול באמצעות _____.",
@@ -4544,7 +6030,9 @@ Content revision v32.32:
       ".list-browser-modal",
       ".editor-modal",
       ".rules-modal",
-      ".pair-modal"
+      ".pair-modal",
+      ".mode-select-overlay",
+      ".table-app-overlay"
     ].join(",");
 
     const modalFocusableSelector = [
@@ -5433,6 +6921,7 @@ Content revision v32.32:
       const fullscreenRequest = requestGameFullscreen();
 
       closeContentGate();
+      showModeSelection();
 
       fullscreenRequest.then((result) => {
         haptic(18);
@@ -5565,6 +7054,22 @@ Content revision v32.32:
       }
     );
 
+    modeFullscreenButton.addEventListener(
+      "pointerup",
+      (event) => {
+        if (event.pointerType === "touch") {
+          runFullscreenButtonGesture(event);
+        }
+      }
+    );
+
+    modeFullscreenButton.addEventListener(
+      "click",
+      (event) => {
+        runFullscreenButtonGesture(event);
+      }
+    );
+
     async function handleGameFullscreenChange() {
       const active = Boolean(gameFullscreenElement());
 
@@ -5580,6 +7085,38 @@ Content revision v32.32:
 
       fullscreenButton.classList.toggle("is-active", active);
       fullscreenButton.classList.remove("needs-attention");
+
+      if (modeFullscreenButton) {
+        const modeLabel = active
+          ? "יציאה ממסך מלא"
+          : "מסך מלא";
+
+        modeFullscreenButton.setAttribute(
+          "aria-label",
+          modeLabel
+        );
+        modeFullscreenButton.setAttribute(
+          "title",
+          modeLabel
+        );
+        modeFullscreenButton.classList.toggle(
+          "is-active",
+          active
+        );
+      }
+
+      if (tableFullscreenButton) {
+        const label = active
+          ? "יציאה ממסך מלא"
+          : "מסך מלא";
+
+        tableFullscreenButton.setAttribute("aria-label", label);
+        tableFullscreenButton.setAttribute("title", label);
+
+        if (tableFullscreenLabel) {
+          tableFullscreenLabel.textContent = label;
+        }
+      }
 
       await configureFullscreenLayout({
         scrollToStart: true
@@ -5773,7 +7310,11 @@ Content revision v32.32:
         return true;
       }
 
-      if (!contentGate.hidden || topOpenModal()) {
+      if (
+        !contentGate.hidden ||
+        topOpenModal() ||
+        document.body.classList.contains("table-mode-active")
+      ) {
         return true;
       }
 
@@ -6477,6 +8018,970 @@ Content revision v32.32:
       });
     });
 
+
+
+    /* ------------------------------------------------------------------
+       Offline table game — v34.9
+       ------------------------------------------------------------------ */
+    const modeSelectOverlay = document.getElementById("modeSelectOverlay");
+    const modeRegularButton = document.getElementById("modeRegularButton");
+    const modeTableButton = document.getElementById("modeTableButton");
+    const modeFullscreenButton = document.getElementById("modeFullscreenButton");
+    const tableAppOverlay = document.getElementById("tableAppOverlay");
+    const tableAppTitle = document.getElementById("tableAppTitle");
+    const tableEyebrow = document.getElementById("tableEyebrow");
+    const tableRoleButton = document.getElementById("tableRoleButton");
+    const tableExitButton = document.getElementById("tableExitButton");
+    const tableStatus = document.getElementById("tableStatus");
+    const tableRoleScreen = document.getElementById("tableRoleScreen");
+    const tableCzarScreen = document.getElementById("tableCzarScreen");
+    const tablePlayerScreen = document.getElementById("tablePlayerScreen");
+    const tablePlayerName = document.getElementById("tablePlayerName");
+    const tableChoosePlayer = document.getElementById("tableChoosePlayer");
+    const tableChooseCzar = document.getElementById("tableChooseCzar");
+    const tableCzarBlackText = document.getElementById("tableCzarBlackText");
+    const tableCzarChooseTwo = document.getElementById("tableCzarChooseTwo");
+    const tableNewBlack = document.getElementById("tableNewBlack");
+    const tableFullscreenButton = document.getElementById("tableFullscreenButton");
+    const tableFullscreenLabel = tableFullscreenButton?.querySelector(
+      ".table-overlay-fullscreen-label"
+    );
+    const tableHandView = document.getElementById("tableHandView");
+    const tableSubmittedView = document.getElementById("tableSubmittedView");
+    const tableRevealView = document.getElementById("tableRevealView");
+    const tablePlayerDisplayName = document.getElementById("tablePlayerDisplayName");
+    const tablePlayerMeta = document.getElementById("tablePlayerMeta");
+    const tableScoreMinus = document.getElementById("tableScoreMinus");
+    const tableScorePlus = document.getElementById("tableScorePlus");
+    const tableScoreValue = document.getElementById("tableScoreValue");
+    const tablePickOne = document.getElementById("tablePickOne");
+    const tablePickTwo = document.getElementById("tablePickTwo");
+    const tablePrevCard = document.getElementById("tablePrevCard");
+    const tableNextCard = document.getElementById("tableNextCard");
+    const tablePlayerCard = document.getElementById("tablePlayerCard");
+    const tablePlayerCardText = document.getElementById("tablePlayerCardText");
+    const tableSelectionOrder = document.getElementById("tableSelectionOrder");
+    const tableHandCounter = document.getElementById("tableHandCounter");
+    const tableHandDots = document.getElementById("tableHandDots");
+    const tableSelectionSummary = document.getElementById("tableSelectionSummary");
+    const tableSubmitAnswer = document.getElementById("tableSubmitAnswer");
+    const tableSubmittedHint = document.getElementById("tableSubmittedHint");
+    const tableRevealAnswer = document.getElementById("tableRevealAnswer");
+    const tableSubmittedBack = document.getElementById("tableSubmittedBack");
+    const tableRevealCards = document.getElementById("tableRevealCards");
+    const tableRevealActions = document.getElementById("tableRevealActions");
+    const tableUseCards = document.getElementById("tableUseCards");
+    const tableRevealBack = document.getElementById("tableRevealBack");
+    const tableModeMenuButton = document.getElementById("tableModeMenuButton");
+
+    let tableState = null;
+    let tableCurrentHandIndex = 0;
+    let tableStatusTimer = 0;
+    let tablePointerStartX = null;
+    let tablePointerStartY = null;
+
+    function tableSetStatus(message, duration = 2200) {
+      tableStatus.textContent = message;
+      clearTimeout(tableStatusTimer);
+      tableStatusTimer = window.setTimeout(() => {
+        tableStatus.textContent = "";
+      }, duration);
+    }
+
+    function tableHash(value) {
+      let hash = 2166136261;
+
+      for (let index = 0; index < value.length; index += 1) {
+        hash ^= value.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+      }
+
+      return (hash >>> 0).toString(36);
+    }
+
+    function tableCardSnapshot(type, rawCard, index = 0) {
+      const text = renderEditionYear(rawCard).trim();
+
+      return {
+        id: `${type}:${tableHash(text)}:${index}`,
+        text
+      };
+    }
+
+    function tableIsCard(value) {
+      return Boolean(
+        value &&
+        typeof value.id === "string" &&
+        value.id.length > 0 &&
+        typeof value.text === "string" &&
+        value.text.trim().length > 0
+      );
+    }
+
+    function tableCloneCard(card) {
+      return {
+        id: card.id,
+        text: card.text
+      };
+    }
+
+    function tableDeck(type) {
+      const activeIds = new Set(
+        validExpansionIds(tableState?.activePacks || [])
+      );
+      const activePacks = availableExpansionPacks()
+        .filter((pack) => activeIds.has(pack.id));
+      const source = type === "black"
+        ? uniqueDeck([
+            ...baseBlackCards,
+            ...activePacks.flatMap((pack) =>
+              normalizeEditionDeck(pack.blackCards)
+            )
+          ])
+        : uniqueDeck([
+            ...baseWhiteCards,
+            ...activePacks.flatMap((pack) =>
+              normalizeWhiteDeck(pack.whiteCards)
+            )
+          ]);
+
+      const idCounts = new Map();
+
+      return source.map((rawCard) => {
+        const text = renderEditionYear(rawCard).trim();
+        const baseId = `${type}:${tableHash(text)}`;
+        const occurrence = idCounts.get(baseId) || 0;
+        idCounts.set(baseId, occurrence + 1);
+
+        return tableCardSnapshot(type, rawCard, occurrence);
+      });
+    }
+
+    function createDefaultTableState() {
+      return {
+        schemaVersion: TABLE_SCHEMA_VERSION,
+        mode: "table",
+        role: "player",
+        playerName: "",
+        activePacks: [...activeExpansionIds],
+        deckContentVersion: String(DECK_CONTENT_VERSION),
+        player: {
+          hand: [],
+          usedWhite: [],
+          selected: [],
+          pickCount: 1,
+          view: "hand",
+          score: 0
+        },
+        czar: {
+          currentBlack: null,
+          usedBlack: []
+        },
+        seed: null,
+        seat: null,
+        lastUpdated: Date.now()
+      };
+    }
+
+    function normalizeTableState(rawState) {
+      const fallback = createDefaultTableState();
+      const state = rawState && typeof rawState === "object"
+        ? rawState
+        : fallback;
+      const player = state.player && typeof state.player === "object"
+        ? state.player
+        : {};
+      const czar = state.czar && typeof state.czar === "object"
+        ? state.czar
+        : {};
+      const hand = Array.isArray(player.hand)
+        ? player.hand.filter(tableIsCard).slice(0, TABLE_HAND_SIZE)
+        : [];
+      const usedWhite = Array.isArray(player.usedWhite)
+        ? player.usedWhite.filter(tableIsCard)
+        : [];
+      const usedBlack = Array.isArray(czar.usedBlack)
+        ? czar.usedBlack.filter(tableIsCard)
+        : [];
+      const pickCount = player.pickCount === 2 ? 2 : 1;
+      const selected = [...new Set(
+        Array.isArray(player.selected) ? player.selected : []
+      )]
+        .filter((index) =>
+          Number.isInteger(index) &&
+          index >= 0 &&
+          index < hand.length
+        )
+        .slice(0, pickCount);
+      const allowedViews = new Set(["hand", "submitted", "reveal"]);
+      let view = allowedViews.has(player.view)
+        ? player.view
+        : "hand";
+
+      if (selected.length !== pickCount && view !== "hand") {
+        view = "hand";
+      }
+
+      return {
+        schemaVersion: TABLE_SCHEMA_VERSION,
+        mode: "table",
+        role: state.role === "czar" ? "czar" : "player",
+        playerName: typeof state.playerName === "string"
+          ? state.playerName.slice(0, 40)
+          : "",
+        activePacks: Array.isArray(state.activePacks)
+          ? validExpansionIds(state.activePacks)
+          : [...activeExpansionIds],
+        deckContentVersion: String(
+          state.deckContentVersion || DECK_CONTENT_VERSION
+        ),
+        player: {
+          hand,
+          usedWhite,
+          selected,
+          pickCount,
+          view,
+          score: Math.max(
+            0,
+            Number.isFinite(Number(player.score))
+              ? Math.floor(Number(player.score))
+              : 0
+          )
+        },
+        czar: {
+          currentBlack: tableIsCard(czar.currentBlack)
+            ? tableCloneCard(czar.currentBlack)
+            : null,
+          usedBlack
+        },
+        seed: state.seed ?? null,
+        seat: state.seat ?? null,
+        lastUpdated: Number(state.lastUpdated) || Date.now()
+      };
+    }
+
+    function loadTableState() {
+      try {
+        const raw = JSON.parse(
+          localStorage.getItem(TABLE_STORAGE_KEY) || "null"
+        );
+        return normalizeTableState(raw);
+      } catch {
+        return createDefaultTableState();
+      }
+    }
+
+    function saveTableState() {
+      if (!tableState) return;
+
+      tableState.lastUpdated = Date.now();
+      tableState.deckContentVersion = String(DECK_CONTENT_VERSION);
+
+      try {
+        localStorage.setItem(
+          TABLE_STORAGE_KEY,
+          JSON.stringify(tableState)
+        );
+      } catch {
+        tableSetStatus("השמירה המקומית אינה זמינה בדפדפן הזה", 3200);
+      }
+    }
+
+    function tableRandomItem(items) {
+      if (!items.length) return null;
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function drawTableWhiteCard() {
+      const deck = tableDeck("white");
+      const handIds = new Set(
+        tableState.player.hand.map((card) => card.id)
+      );
+      let usedIds = new Set(
+        tableState.player.usedWhite.map((card) => card.id)
+      );
+      let candidates = deck.filter(
+        (card) => !handIds.has(card.id) && !usedIds.has(card.id)
+      );
+
+      if (!candidates.length) {
+        tableState.player.usedWhite = [];
+        usedIds = new Set();
+        candidates = deck.filter((card) => !handIds.has(card.id));
+      }
+
+      const selected = tableRandomItem(candidates);
+      return selected ? tableCloneCard(selected) : null;
+    }
+
+    function ensureTableHand() {
+      if (!tableState) return;
+
+      const unique = new Map();
+      tableState.player.hand.forEach((card) => {
+        if (tableIsCard(card) && !unique.has(card.id)) {
+          unique.set(card.id, tableCloneCard(card));
+        }
+      });
+      tableState.player.hand = [...unique.values()].slice(0, TABLE_HAND_SIZE);
+
+      let guard = 0;
+      while (
+        tableState.player.hand.length < TABLE_HAND_SIZE &&
+        guard < TABLE_HAND_SIZE * 4
+      ) {
+        const card = drawTableWhiteCard();
+        if (!card) break;
+        tableState.player.hand.push(card);
+        guard += 1;
+      }
+
+      tableCurrentHandIndex = Math.min(
+        tableCurrentHandIndex,
+        Math.max(0, tableState.player.hand.length - 1)
+      );
+    }
+
+    function drawTableBlackCard({ rememberCurrent = true } = {}) {
+      const deck = tableDeck("black");
+      const current = tableState.czar.currentBlack;
+
+      if (rememberCurrent && current && tableIsCard(current)) {
+        const alreadyUsed = tableState.czar.usedBlack.some(
+          (card) => card.id === current.id
+        );
+        if (!alreadyUsed) {
+          tableState.czar.usedBlack.push(tableCloneCard(current));
+        }
+      }
+
+      let usedIds = new Set(
+        tableState.czar.usedBlack.map((card) => card.id)
+      );
+      let candidates = deck.filter(
+        (card) => card.id !== current?.id && !usedIds.has(card.id)
+      );
+
+      if (!candidates.length) {
+        tableState.czar.usedBlack = [];
+        usedIds = new Set();
+        candidates = deck.filter((card) => card.id !== current?.id);
+      }
+
+      const selected = tableRandomItem(candidates.length ? candidates : deck);
+      tableState.czar.currentBlack = selected
+        ? tableCloneCard(selected)
+        : null;
+      saveTableState();
+    }
+
+    function ensureTableBlackCard() {
+      if (!tableState.czar.currentBlack) {
+        drawTableBlackCard({ rememberCurrent: false });
+      }
+    }
+
+    function initializeTableMode() {
+      tableState = loadTableState();
+      ensureTableHand();
+      ensureTableBlackCard();
+      saveTableState();
+      renderTableRoleScreen();
+    }
+
+    function closeModeSelection() {
+      modeSelectOverlay.classList.remove("is-open");
+      modeSelectOverlay.hidden = true;
+      syncModalOpenState();
+    }
+
+    function closeTableApp() {
+      tableAppOverlay.classList.remove("is-open");
+      tableAppOverlay.hidden = true;
+      document.body.classList.remove("table-mode-active");
+      syncModalOpenState();
+    }
+
+    function showModeSelection() {
+      closeSettings();
+      closeTableApp();
+      modeSelectOverlay.hidden = false;
+      modeSelectOverlay.classList.add("is-open");
+      syncModalOpenState();
+      focusInsideModal(modeSelectOverlay, modeRegularButton);
+    }
+
+    function activateRegularMode() {
+      closeModeSelection();
+      closeTableApp();
+      document.body.classList.remove("table-mode-active");
+      requestAnimationFrame(() => {
+        if (isMobileGameFullscreen()) {
+          configureFullscreenLayout({ scrollToStart: true });
+        } else {
+          configureAdaptiveLayout({ preserveAnchor: false });
+        }
+      });
+    }
+
+    function openTableApp() {
+      closeModeSelection();
+      closeSettings();
+      document.body.classList.add("table-mode-active");
+      tableAppOverlay.hidden = false;
+      tableAppOverlay.classList.add("is-open");
+      syncModalOpenState();
+      showTableRoleSelection();
+    }
+
+    function setTableScreen(screen) {
+      tableRoleScreen.hidden = screen !== "role";
+      tableCzarScreen.hidden = screen !== "czar";
+      tablePlayerScreen.hidden = screen !== "player";
+      tableRoleButton.hidden = screen === "role";
+
+      if (tableFullscreenButton) {
+        const isPlayerScreen = screen === "player";
+
+        tableFullscreenButton.hidden = ![
+          "role",
+          "czar",
+          "player"
+        ].includes(screen);
+
+        tableFullscreenButton.classList.toggle(
+          "is-icon-only",
+          isPlayerScreen
+        );
+
+        if (tableFullscreenLabel) {
+          tableFullscreenLabel.hidden = isPlayerScreen;
+        }
+      }
+
+      if (
+        tableFullscreenButton &&
+        screen !== "player"
+      ) {
+        tableFullscreenButton.classList.remove("is-raised");
+      }
+
+      if (screen === "role") {
+        tableAppTitle.textContent = "בחירת תפקיד";
+        tableEyebrow.textContent = "משחק סביב השולחן";
+      } else if (screen === "czar") {
+        tableAppTitle.textContent = "מצב צאר";
+        tableEyebrow.textContent = "קלף שחור לכולם";
+        tableRoleButton.textContent = "סיימתי כצאר";
+        tableRoleButton.setAttribute(
+          "aria-label",
+          "סיימתי להיות צאר וחזרה לבחירת תפקיד"
+        );
+        tableRoleButton.setAttribute(
+          "title",
+          "סיימתי להיות צאר"
+        );
+      } else {
+        tableAppTitle.textContent = "מצב שחקן";
+        tableEyebrow.textContent = "משחק סביב השולחן";
+        tableRoleButton.textContent = "החלף תפקיד";
+        tableRoleButton.setAttribute(
+          "aria-label",
+          "חזרה לבחירת תפקיד"
+        );
+        tableRoleButton.setAttribute(
+          "title",
+          "החלף תפקיד"
+        );
+      }
+
+      tableAppOverlay.scrollTo({
+        top: 0,
+        behavior: "auto"
+      });
+    }
+
+    function showTableRoleSelection() {
+      setTableScreen("role");
+      renderTableRoleScreen();
+      focusInsideModal(tableAppOverlay, tableChoosePlayer);
+    }
+
+    function renderTableRoleScreen() {
+      if (!tableState) return;
+      tablePlayerName.value = tableState.playerName;
+    }
+
+    function enterTablePlayer() {
+      tableState.role = "player";
+      ensureTableHand();
+      saveTableState();
+      setTableScreen("player");
+      renderTablePlayer();
+      focusInsideModal(tableAppOverlay, tablePlayerCard);
+    }
+
+    function enterTableCzar() {
+      tableState.role = "czar";
+      ensureTableBlackCard();
+      saveTableState();
+      setTableScreen("czar");
+      renderTableCzar();
+      focusInsideModal(tableAppOverlay, tableNewBlack);
+    }
+
+    function renderTableCzar() {
+      ensureTableBlackCard();
+      const card = tableState.czar.currentBlack;
+      tableCzarBlackText.textContent = card?.text || "אין קלף שחור זמין";
+      tableCzarChooseTwo.hidden = !card || countBlanks(card.text) < 2;
+    }
+
+    function tableSelectedCards() {
+      return tableState.player.selected
+        .map((index) => tableState.player.hand[index])
+        .filter(tableIsCard)
+        .map(tableCloneCard);
+    }
+
+    function tableScoreText(score) {
+      if (score === 1) return "נקודה אחת";
+      return `${score} נקודות`;
+    }
+
+    function tablePreferredScrollBehavior() {
+      return window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches
+        ? "auto"
+        : "smooth";
+    }
+
+    function tableScrollToElement(element, block = "center") {
+      if (!element || element.hidden) return;
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          element.scrollIntoView({
+            behavior: tablePreferredScrollBehavior(),
+            block,
+            inline: "nearest"
+          });
+        });
+      });
+    }
+
+    function tableShowSubmitAction() {
+      if (tableSubmitAnswer.disabled) return;
+      tableSubmitAnswer.classList.add("is-visible");
+    }
+
+    function tableShowRevealActions() {
+      tableScrollToElement(tableRevealActions, "end");
+    }
+
+
+    function animateTableCzarRefreshButton() {
+      tableNewBlack.classList.remove("is-spinning");
+      void tableNewBlack.offsetWidth;
+      tableNewBlack.classList.add("is-spinning");
+      window.setTimeout(() => {
+        tableNewBlack.classList.remove("is-spinning");
+      }, 420);
+    }
+
+    function animateTableSelectionConfirmation() {
+      tableSelectionOrder.classList.remove("is-popping");
+      tablePlayerCard.classList.remove("selection-confirmed");
+      void tableSelectionOrder.offsetWidth;
+      void tablePlayerCard.offsetWidth;
+      tableSelectionOrder.classList.add("is-popping");
+      tablePlayerCard.classList.add("selection-confirmed");
+      setTimeout(() => {
+        tableSelectionOrder.classList.remove("is-popping");
+        tablePlayerCard.classList.remove("selection-confirmed");
+      }, 240);
+    }
+
+    function renderTablePlayerIdentity() {
+      const name = tableState.playerName.trim();
+      const handCount = tableState.player.hand.length;
+
+      tablePlayerDisplayName.textContent = name || "השחקן האנונימי";
+      tablePlayerMeta.textContent = handCount
+        ? `${handCount} קלפים ביד`
+        : "היד ריקה";
+      tableScoreValue.textContent = tableScoreText(tableState.player.score);
+    }
+
+    function renderTablePickToggle() {
+      const pickCount = tableState.player.pickCount;
+      tablePickOne.classList.toggle("is-active", pickCount === 1);
+      tablePickTwo.classList.toggle("is-active", pickCount === 2);
+      tablePickOne.setAttribute("aria-pressed", String(pickCount === 1));
+      tablePickTwo.setAttribute("aria-pressed", String(pickCount === 2));
+    }
+
+    function renderTableHandCard() {
+      ensureTableHand();
+      const hand = tableState.player.hand;
+      tableCurrentHandIndex = Math.min(
+        Math.max(0, tableCurrentHandIndex),
+        Math.max(0, hand.length - 1)
+      );
+      const card = hand[tableCurrentHandIndex];
+      const order = tableState.player.selected.indexOf(tableCurrentHandIndex);
+
+      tablePlayerCardText.textContent = card?.text || "אין קלפים זמינים";
+      tablePlayerCard.classList.toggle("is-selected", order >= 0);
+      tableSelectionOrder.hidden = order < 0;
+      tableSelectionOrder.textContent = order >= 0 ? String(order + 1) : "";
+      tableHandDots.replaceChildren();
+      hand.forEach((handCard, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "table-hand-dot";
+        button.textContent = String(index + 1);
+        button.setAttribute(
+          "aria-label",
+          `עבור לקלף ${index + 1}`
+        );
+        button.classList.toggle("is-current", index === tableCurrentHandIndex);
+        button.classList.toggle(
+          "is-selected",
+          tableState.player.selected.includes(index)
+        );
+        button.addEventListener("click", () => {
+          tableCurrentHandIndex = index;
+          renderTablePlayer();
+        });
+        tableHandDots.append(button);
+      });
+    }
+
+    function renderTableSelectionSummary() {
+      const cards = tableSelectedCards();
+      const target = tableState.player.pickCount;
+
+      tableSelectionSummary.classList.remove(
+        "is-empty",
+        "is-attention",
+        "is-ready"
+      );
+
+      if (!cards.length) {
+        tableSelectionSummary.textContent = target === 2
+          ? "בחר שני קלפים לפי הסדר: הראשון יסומן 1 והשני 2."
+          : "הקש על קלף כדי לבחור אותו.";
+        tableSelectionSummary.classList.add("is-empty");
+      } else if (target === 2 && cards.length === 1) {
+        tableSelectionSummary.textContent =
+          "קלף 1 נבחר. עכשיו עבור לקלף השני ובחר גם אותו.";
+        tableSelectionSummary.classList.add("is-attention");
+      } else {
+        tableSelectionSummary.textContent = target === 2
+          ? "שני הקלפים מוכנים לפי הסדר 1–2."
+          : "הקלף מוכן להגשה.";
+        tableSelectionSummary.classList.add("is-ready");
+      }
+
+      const isReady = cards.length === target;
+      tableSubmitAnswer.disabled = !isReady;
+      tableSubmitAnswer.textContent = target === 2
+        ? "הגש שתי תשובות"
+        : "הגש תשובה";
+      tableSubmitAnswer.classList.toggle("is-visible", isReady);
+    }
+
+    function renderTableRevealCards() {
+      const cards = tableSelectedCards();
+      tableRevealCards.replaceChildren();
+      tableRevealCards.classList.toggle("is-double", cards.length === 2);
+
+      cards.forEach((card, index) => {
+        const article = document.createElement("article");
+        article.className = "table-card table-reveal-card white";
+
+        const badge = document.createElement("span");
+        badge.className = "table-reveal-index";
+        badge.textContent = String(index + 1);
+
+        const text = document.createElement("div");
+        text.className = "table-card-text";
+        text.textContent = card.text;
+
+        const brand = document.createElement("div");
+        brand.className = "brand";
+        brand.innerHTML =
+          '<span class="brand-mark" aria-hidden="true"></span>' +
+          '<span>קלפים נגד האנושות</span>';
+
+        article.append(badge, text, brand);
+        tableRevealCards.append(article);
+      });
+    }
+
+    function renderTablePlayerView() {
+      const view = tableState.player.view;
+      tableHandView.hidden = view !== "hand";
+      tableSubmittedView.hidden = view !== "submitted";
+      tableRevealView.hidden = view !== "reveal";
+
+      if (tableFullscreenButton) {
+        tableFullscreenButton.classList.toggle(
+          "is-raised",
+          view !== "hand"
+        );
+      }
+
+      if (view === "submitted") {
+        tableSubmittedHint.textContent =
+          "הניחו את הטלפונים עם המסך כלפי מעלה וערבבו את המיקומים. הצאר יחשוף את התשובות כשכולם מוכנים.";
+      }
+
+      if (view === "reveal") {
+        renderTableRevealCards();
+        tableShowRevealActions();
+      }
+    }
+
+    function renderTablePlayer() {
+      ensureTableHand();
+      renderTablePlayerIdentity();
+      renderTablePickToggle();
+      renderTableHandCard();
+      renderTableSelectionSummary();
+      renderTablePlayerView();
+      saveTableState();
+    }
+
+    function moveTableHand(delta) {
+      const length = tableState.player.hand.length;
+      if (!length) return;
+      tableCurrentHandIndex =
+        (tableCurrentHandIndex + delta + length) % length;
+      renderTablePlayer();
+    }
+
+    function toggleCurrentTableCard() {
+      const index = tableCurrentHandIndex;
+      const selected = [...tableState.player.selected];
+      const existingPosition = selected.indexOf(index);
+      const addedCard = existingPosition < 0;
+
+      if (existingPosition >= 0) {
+        selected.splice(existingPosition, 1);
+      } else if (tableState.player.pickCount === 1) {
+        selected.splice(0, selected.length, index);
+      } else if (selected.length < 2) {
+        selected.push(index);
+      } else {
+        selected.shift();
+        selected.push(index);
+      }
+
+      const selectionComplete =
+        addedCard &&
+        selected.length === tableState.player.pickCount;
+
+      tableState.player.selected = selected;
+      tableState.player.view = "hand";
+      haptic(10);
+      renderTablePlayer();
+
+      if (addedCard) {
+        animateTableSelectionConfirmation();
+      }
+
+      if (selectionComplete) {
+        tableShowSubmitAction();
+      }
+    }
+
+    function setTablePickCount(count) {
+      tableState.player.pickCount = count === 2 ? 2 : 1;
+      tableState.player.selected = tableState.player.selected
+        .slice(0, tableState.player.pickCount);
+      tableState.player.view = "hand";
+      renderTablePlayer();
+    }
+
+    function submitTableAnswer() {
+      if (
+        tableState.player.selected.length !==
+        tableState.player.pickCount
+      ) {
+        tableSetStatus("צריך להשלים את הבחירה לפני ההגשה");
+        return;
+      }
+
+      tableState.player.view = "submitted";
+      saveTableState();
+      haptic(16);
+      renderTablePlayer();
+    }
+
+    function revealTableAnswer() {
+      tableState.player.view = "reveal";
+      saveTableState();
+      haptic(14);
+      renderTablePlayer();
+    }
+
+    function returnTableAnswerToHand() {
+      tableState.player.view = "hand";
+      saveTableState();
+      renderTablePlayer();
+    }
+
+    function useSelectedTableCards() {
+      const selectedIndexes = [...tableState.player.selected]
+        .sort((a, b) => b - a);
+
+      if (!selectedIndexes.length) {
+        returnTableAnswerToHand();
+        return;
+      }
+
+      selectedIndexes.forEach((index) => {
+        const [removed] = tableState.player.hand.splice(index, 1);
+        if (removed) {
+          tableState.player.usedWhite.push(tableCloneCard(removed));
+        }
+      });
+
+      tableState.player.selected = [];
+      tableState.player.view = "hand";
+      tableCurrentHandIndex = Math.min(
+        tableCurrentHandIndex,
+        Math.max(0, tableState.player.hand.length - 1)
+      );
+      ensureTableHand();
+      saveTableState();
+      haptic(18);
+      tableSetStatus("היד הושלמה מחדש לעשרה קלפים");
+      renderTablePlayer();
+    }
+
+    function changeTableScore(delta) {
+      tableState.player.score = Math.max(
+        0,
+        tableState.player.score + delta
+      );
+      saveTableState();
+      renderTablePlayerIdentity();
+    }
+
+    modeRegularButton.addEventListener("click", activateRegularMode);
+    modeTableButton.addEventListener("click", openTableApp);
+    tableModeMenuButton.addEventListener("click", openTableApp);
+    tableExitButton.addEventListener("click", showModeSelection);
+    tableRoleButton.addEventListener("click", showTableRoleSelection);
+    tableChoosePlayer.addEventListener("click", enterTablePlayer);
+    tableChooseCzar.addEventListener("click", enterTableCzar);
+
+    tablePlayerName.addEventListener("input", () => {
+      tableState.playerName = tablePlayerName.value.slice(0, 40);
+      saveTableState();
+    });
+
+    tableNewBlack.addEventListener("click", () => {
+      animateTableCzarRefreshButton();
+      drawTableBlackCard();
+      renderTableCzar();
+      haptic(15);
+      tableSetStatus(
+        tableCzarChooseTwo.hidden
+          ? "נשלף קלף שחור חדש"
+          : "נשלף קלף בחר 2"
+      );
+    });
+
+    tableFullscreenButton.addEventListener(
+      "pointerup",
+      (event) => {
+        if (event.pointerType === "touch") {
+          runFullscreenButtonGesture(event);
+        }
+      }
+    );
+
+    tableFullscreenButton.addEventListener(
+      "click",
+      (event) => {
+        runFullscreenButtonGesture(event);
+      }
+    );
+
+    tableScoreMinus.addEventListener("click", () => changeTableScore(-1));
+    tableScorePlus.addEventListener("click", () => changeTableScore(1));
+    tablePickOne.addEventListener("click", () => setTablePickCount(1));
+    tablePickTwo.addEventListener("click", () => setTablePickCount(2));
+    tablePrevCard.addEventListener("click", () => moveTableHand(-1));
+    tableNextCard.addEventListener("click", () => moveTableHand(1));
+    tableSubmitAnswer.addEventListener("click", submitTableAnswer);
+    tableRevealAnswer.addEventListener("click", revealTableAnswer);
+    tableSubmittedBack.addEventListener("click", returnTableAnswerToHand);
+    tableRevealBack.addEventListener("click", returnTableAnswerToHand);
+    tableUseCards.addEventListener("click", useSelectedTableCards);
+
+    tablePlayerCard.addEventListener("pointerdown", (event) => {
+      tablePointerStartX = event.clientX;
+      tablePointerStartY = event.clientY;
+    });
+
+    tablePlayerCard.addEventListener("pointerup", (event) => {
+      if (tablePointerStartX === null) return;
+
+      const deltaX = event.clientX - tablePointerStartX;
+      const deltaY = event.clientY - tablePointerStartY;
+      tablePointerStartX = null;
+      tablePointerStartY = null;
+
+      if (Math.abs(deltaX) > 44 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        moveTableHand(deltaX < 0 ? 1 : -1);
+        return;
+      }
+
+      toggleCurrentTableCard();
+    });
+
+    tablePlayerCard.addEventListener("pointercancel", () => {
+      tablePointerStartX = null;
+      tablePointerStartY = null;
+    });
+
+    tablePlayerCard.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggleCurrentTableCard();
+      } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        moveTableHand(1);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        moveTableHand(-1);
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+
+      if (!modeSelectOverlay.hidden) {
+        activateRegularMode();
+        return;
+      }
+
+      if (!tableAppOverlay.hidden) {
+        if (!tableRoleScreen.hidden) {
+          showModeSelection();
+        } else {
+          showTableRoleSelection();
+        }
+      }
+    });
+
+
     if ("serviceWorker" in navigator && window.isSecureContext) {
       window.addEventListener("load", async () => {
         try {
@@ -6499,6 +9004,7 @@ Content revision v32.32:
     rebuildActiveDeck();
 
     const restored=loadState();
+    initializeTableMode();
     renderDeckLists();
     updateWakeLockUi();
     updateInstallAppUi();
