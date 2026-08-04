@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.11.9:
-- Defers the visible PWA update banner until after the content warning is accepted
-- Keeps a waiting Service Worker queued invisibly while the content gate is active
-- Removes Chrome's blue tap highlight from all buttons and button-like controls
-- Adds consistent touch-press feedback while preserving keyboard focus visibility
-- Keeps the fixed-direction SVG arrows and all v34.11.8 behavior
-- Preserves the 1,040-card migration, fullscreen, Top Layer and explicit PWA update flows
+Content revision v34.12.0:
+- Rewrites the physical table-mode guide in a shorter, sharper and more playful tone
+- Renames both guide entry buttons to “How to survive an entire evening without a server?”
+- Clarifies that the most recent pooper starts as czar
+- Explains anonymous phone shuffling as protection against czar favoritism
+- Clarifies that the black card is reread before every answer and the czar role moves right
+- Updates the submitted-answer screen with the same anti-favoritism instruction
+- Preserves all v34.11.9 behavior, 1,040-card migration, fullscreen, Top Layer and PWA update flows
 - Internal deck content version remains 33.8
 -->
 
@@ -28,8 +29,8 @@ Content revision v34.11.9:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.11.9" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.11.9" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.12.0" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.12.0" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -39,7 +40,7 @@ Content revision v34.11.9:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.11.9" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.12.0" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2535,7 +2536,7 @@ Content revision v34.11.9:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.11.9
+       Offline table game — v34.12.0
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -4346,7 +4347,7 @@ Content revision v34.11.9:
             class="table-role-guide-button"
             type="button"
           >
-            🪑 איך משחקים סביב השולחן?
+            🪑 איך לעבור ערב שלם בלי שרת?
           </button>
 
           <div class="table-name-field">
@@ -4488,7 +4489,7 @@ Content revision v34.11.9:
               <div class="table-submission-cover-icon" aria-hidden="true">●</div>
               <h3>התשובה מוכנה</h3>
               <p id="tableSubmittedHint">
-                הניחו את הטלפונים עם המסך כלפי מעלה וערבבו את המיקומים. הצאר יחשוף את התשובות כשכולם מוכנים.
+                אחרי שכולם נעלו תשובה, אוספים ומערבבים את הטלפונים — כדי שהצאר לא יוכל לעשות פרוטקציות.
               </p>
 
               <div class="table-submission-actions">
@@ -4822,7 +4823,7 @@ Content revision v34.11.9:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.11.9 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.12.0 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -4942,7 +4943,7 @@ Content revision v34.11.9:
           <div id="tableHelpMenuSection" class="settings-section-title">עזרה</div>
 
           <button id="tableGuideButton" class="settings-action" type="button">
-            🪑 איך משחקים סביב השולחן?
+            🪑 איך לעבור ערב שלם בלי שרת?
           </button>
 
           <button id="tableBasicRulesButton" class="settings-action" type="button">
@@ -4956,7 +4957,7 @@ Content revision v34.11.9:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.11.9</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.12.0</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5034,35 +5035,35 @@ Content revision v34.11.9:
       <h2 id="tableGuideTitle">איך משחקים סביב השולחן?</h2>
 
       <p class="table-guide-intro">
-        אין סנכרון בין המכשירים — כל טלפון מנהל יד פרטית, והשולחן עצמו מחבר בין כולם.
+        אין סנכרון בין הטלפונים — לכל שחקן יש יד פרטית, והשולחן עושה את שאר העבודה.
       </p>
 
       <ol class="table-guide-steps">
         <li class="table-guide-step">
-          <strong>בוחרים תפקידים</strong>
+          <strong>בוחרים צאר</strong>
           <p>
-            שחקן אחד נכנס כצאר, וכל השאר נכנסים כשחקנים. הצאר מקריא בקול את הקלף השחור.
+            האחרון שחירבן הוא הצאר. כל השאר שחקנים, והצאר מקריא את הקלף השחור.
           </p>
         </li>
 
         <li class="table-guide-step">
-          <strong>מגישים בלי להיחשף</strong>
+          <strong>מגישים בלי קומבינות</strong>
           <p>
-            כל שחקן בוחר תשובה ולוחץ ״הגש תשובה״. מניחים את הטלפונים במרכז ומערבבים את המיקומים.
+            כל שחקן בוחר תשובה ולוחץ ״הגש תשובה״. אחרי שכולם נעלו תשובה, אוספים ומערבבים את הטלפונים — כדי שהצאר לא יוכל לעשות פרוטקציות.
           </p>
         </li>
 
         <li class="table-guide-step">
           <strong>חושפים וממשיכים</strong>
           <p>
-            הצאר חושף את התשובות ובוחר מנצח. המנצח מוסיף נקודה, כולם משלימים יד ומחליפים צאר.
+            הצאר מקריא את הקלף השחור לפני כל שילוב ובוחר את הכי מופרע. המנצח מקבל נקודה, כולם משלימים יד, והצאר עובר ימינה.
           </p>
         </li>
       </ol>
 
       <p class="table-guide-note">
         <strong>בקלף ״בחר 2״:</strong>
-        בחרו שני קלפים לפי הסדר שבו הם צריכים להיקרא. שני הקלפים ייחשפו יחד.
+        בוחרים שני קלפים לפי סדר ההקראה. הם ייחשפו יחד.
       </p>
 
       <button id="tableGuideStart" class="table-primary-button table-guide-start" type="button">
@@ -9888,7 +9889,7 @@ Content revision v34.11.9:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.11.9 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.12.0 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
@@ -10608,7 +10609,7 @@ Content revision v34.11.9:
 
       if (view === "submitted") {
         tableSubmittedHint.textContent =
-          "הניחו את הטלפונים עם המסך כלפי מעלה וערבבו את המיקומים. הצאר יחשוף את התשובות כשכולם מוכנים.";
+          "אחרי שכולם נעלו תשובה, אוספים ומערבבים את הטלפונים — כדי שהצאר לא יוכל לעשות פרוטקציות.";
       }
 
       if (view === "reveal") {
