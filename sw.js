@@ -1,6 +1,6 @@
-const STATIC_CACHE = "cah-il-static-v34.10.5";
-const RUNTIME_CACHE = "cah-il-runtime-v34.10.5";
-const FONT_CACHE = "cah-il-fonts-v34.10.5";
+const STATIC_CACHE = "cah-il-static-v34.11.2";
+const RUNTIME_CACHE = "cah-il-runtime-v34.11.2";
+const FONT_CACHE = "cah-il-fonts-v34.11.2";
 
 const APP_SHELL = [
   "./",
@@ -19,8 +19,13 @@ self.addEventListener("install", (event) => {
     caches
       .open(STATIC_CACHE)
       .then((cache) => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting())
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("activate", (event) => {

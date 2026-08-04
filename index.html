@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.10.5:
-- Keeps the verified Android fullscreen flow from v34.10.3/v34.10.4
-- Opens table-menu card browser, deck editor and rules in the browser Top Layer
-- Uses manual Popover API mounting instead of changing the fullscreen element DOM tree
-- Restores shared modals to normal document behavior after closing
-- Includes a safe fallback for browsers without Popover API support
-- Preserves the complete table menu, offline state and all 1,040 cards
-- Internal deck content version remains 33.6
+Content revision v34.11.2:
+- Fixes the table guide requiring multiple taps on Android
+- Registers the guide as a persistent manual popover during initial HTML parsing
+- Adds a first-run dark spotlight that leaves only the table-guide button active
+- Uses a new guide-seen key so affected v34.11.1 devices receive the corrected onboarding
+- Adds a shimmer and pulse effect to the first-run guide button
+- Hides the role-screen guide shortcut only after “Got it, start”
+- Keeps the permanent guide entry inside the table settings menu
+- Preserves the 1,040-card migration, fullscreen, Top Layer and explicit PWA update flows
+- Internal deck content version remains 33.7
 -->
 
 <html lang="he" dir="rtl">
@@ -28,8 +30,8 @@ Content revision v34.10.5:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.5" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.5" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.11.2" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.11.2" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -39,7 +41,7 @@ Content revision v34.10.5:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.10.5" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.11.2" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -371,6 +373,189 @@ Content revision v34.10.5:
 
     .rules-modal.is-open {
       display: flex;
+    }
+
+    .app-update-banner {
+      position: fixed;
+      left: 50%;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      z-index: 12000;
+      width: min(calc(100% - 28px), 620px);
+      transform: translateX(-50%);
+      padding: 0;
+    }
+
+    .app-update-banner[hidden] {
+      display: none !important;
+    }
+
+    .app-update-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      border: 1px solid #484848;
+      border-radius: 18px;
+      background: rgba(24, 24, 24, .97);
+      color: #f8f8f8;
+      box-shadow: 0 18px 64px rgba(0, 0, 0, .62);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .app-update-copy {
+      min-width: 0;
+    }
+
+    .app-update-copy strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: .98rem;
+    }
+
+    .app-update-copy span {
+      display: block;
+      color: #c7c7c7;
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+
+    .app-update-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .app-update-button {
+      min-height: 42px;
+      padding: 0 15px;
+      border: 0;
+      border-radius: 12px;
+      background: #f5f5f2;
+      color: #111;
+      font: inherit;
+      font-size: .88rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .app-update-button:disabled {
+      opacity: .64;
+      cursor: progress;
+    }
+
+    .app-update-dismiss {
+      min-height: 42px;
+      padding: 0 11px;
+      border: 1px solid #4b4b4b;
+      border-radius: 12px;
+      background: transparent;
+      color: #dedede;
+      font: inherit;
+      font-size: .84rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .table-guide-dialog {
+      width: min(100%, 720px);
+    }
+
+    .table-guide-intro {
+      color: #d2d2d2;
+      text-align: center;
+    }
+
+    .table-guide-steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 22px 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: table-guide-step;
+    }
+
+    .table-guide-step {
+      position: relative;
+      min-height: 188px;
+      padding: 50px 16px 16px;
+      border: 1px solid #3a3a3a;
+      border-radius: 18px;
+      background: #202020;
+      counter-increment: table-guide-step;
+    }
+
+    .table-guide-step::before {
+      content: counter(table-guide-step);
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #f3f3ef;
+      color: #111;
+      font-size: .86rem;
+      font-weight: 900;
+    }
+
+    .table-guide-step strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .table-guide-step p {
+      margin: 0;
+      color: #cfcfcf;
+      font-size: .9rem;
+      line-height: 1.58;
+    }
+
+    .table-guide-note {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border-right: 3px solid #ecece7;
+      border-radius: 10px;
+      background: #202020;
+      color: #d6d6d6;
+      font-size: .88rem;
+      line-height: 1.55;
+    }
+
+    .table-guide-start {
+      display: block;
+      width: min(100%, 320px);
+      margin: 0 auto;
+    }
+
+    @media (max-width: 680px) {
+      .app-update-card {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .app-update-actions {
+        width: 100%;
+      }
+
+      .app-update-button {
+        flex: 1;
+      }
+
+      .table-guide-steps {
+        grid-template-columns: 1fr;
+      }
+
+      .table-guide-step {
+        min-height: 0;
+      }
     }
 
     .rules-dialog {
@@ -2258,7 +2443,7 @@ Content revision v34.10.5:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.10.5
+       Offline table game — v34.11.2
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -2663,6 +2848,150 @@ Content revision v34.10.5:
       font-weight: 700;
       line-height: 1.35;
       text-align: center;
+    }
+
+    .table-role-guide-button {
+      position: relative;
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+      margin: 10px auto 18px;
+      padding: 8px 13px;
+      overflow: hidden;
+      border: 1px solid #454545;
+      border-radius: 999px;
+      background: #202020;
+      color: #ededed;
+      font: inherit;
+      font-size: .84rem;
+      font-weight: 750;
+      cursor: pointer;
+      isolation: isolate;
+    }
+
+    .table-role-guide-button:active {
+      transform: scale(.98);
+    }
+
+    .table-role-guide-button[hidden],
+    .table-guide-spotlight[hidden] {
+      display: none !important;
+    }
+
+    .table-guide-spotlight {
+      position: fixed;
+      inset: 0;
+      z-index: 8050;
+      background: rgba(0, 0, 0, .82);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      cursor: default;
+    }
+
+    .table-role-guide-button.is-spotlighted {
+      z-index: 8060;
+      border-color: rgba(255, 255, 255, .92);
+      background:
+        linear-gradient(
+          110deg,
+          #f5f5f1 0%,
+          #f5f5f1 35%,
+          #ffffff 48%,
+          #f5f5f1 62%,
+          #f5f5f1 100%
+        );
+      background-size: 220% 100%;
+      color: #111;
+      box-shadow:
+        0 0 0 5px rgba(255, 255, 255, .14),
+        0 14px 42px rgba(0, 0, 0, .72);
+      animation:
+        tableGuideButtonPulse 1.55s ease-in-out infinite,
+        tableGuideButtonShimmer 2.1s linear infinite;
+    }
+
+    .table-role-guide-button.is-spotlighted::after {
+      content: "";
+      position: absolute;
+      top: -80%;
+      bottom: -80%;
+      left: -44%;
+      width: 34%;
+      z-index: -1;
+      transform: skewX(-18deg);
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, .95),
+          transparent
+        );
+      animation: tableGuideSweep 1.8s ease-in-out infinite;
+    }
+
+    .table-role-guide-button.spotlight-nudge {
+      animation:
+        tableGuideNudge .42s ease,
+        tableGuideButtonShimmer 2.1s linear infinite;
+    }
+
+    @keyframes tableGuideButtonPulse {
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.045);
+      }
+    }
+
+    @keyframes tableGuideButtonShimmer {
+      from {
+        background-position: 130% 0;
+      }
+
+      to {
+        background-position: -90% 0;
+      }
+    }
+
+    @keyframes tableGuideSweep {
+      0% {
+        left: -48%;
+      }
+
+      55%,
+      100% {
+        left: 118%;
+      }
+    }
+
+    @keyframes tableGuideNudge {
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(5px);
+      }
+
+      50% {
+        transform: translateX(-5px);
+      }
+
+      75% {
+        transform: translateX(3px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .table-role-guide-button.is-spotlighted,
+      .table-role-guide-button.is-spotlighted::after,
+      .table-role-guide-button.spotlight-nudge {
+        animation: none !important;
+      }
     }
 
     .table-settings-floating {
@@ -3668,6 +3997,32 @@ Content revision v34.10.5:
 
 
   <div
+    id="appUpdateBanner"
+    class="app-update-banner"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+    hidden
+  >
+    <div class="app-update-card">
+      <div class="app-update-copy">
+        <strong>גרסה חדשה זמינה</strong>
+        <span>העדכון ייטען מחדש וישמור את החפיסות והמשחק המקומי.</span>
+      </div>
+
+      <div class="app-update-actions">
+        <button id="appUpdateNow" class="app-update-button" type="button">
+          עדכן עכשיו
+        </button>
+        <button id="appUpdateLater" class="app-update-dismiss" type="button">
+          אחר כך
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <div
     id="modeSelectOverlay"
     class="mode-select-overlay"
     role="dialog"
@@ -3756,6 +4111,21 @@ Content revision v34.10.5:
           </p>
 
           <div id="tableRoleDeckSummary" class="table-role-deck-summary"></div>
+
+          <div
+            id="tableGuideSpotlight"
+            class="table-guide-spotlight"
+            aria-hidden="true"
+            hidden
+          ></div>
+
+          <button
+            id="tableRoleGuideButton"
+            class="table-role-guide-button"
+            type="button"
+          >
+            🪑 איך משחקים סביב השולחן?
+          </button>
 
           <div class="table-name-field">
             <label for="tablePlayerName">שם לתצוגה — לא חובה</label>
@@ -4215,7 +4585,7 @@ Content revision v34.10.5:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.10.5 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.11.2 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -4334,6 +4704,10 @@ Content revision v34.10.5:
         <section class="settings-section" aria-labelledby="tableHelpMenuSection">
           <div id="tableHelpMenuSection" class="settings-section-title">עזרה</div>
 
+          <button id="tableGuideButton" class="settings-action" type="button">
+            🪑 איך משחקים סביב השולחן?
+          </button>
+
           <button id="tableBasicRulesButton" class="settings-action" type="button">
             💩 חוקים בסיסיים 💩
           </button>
@@ -4345,7 +4719,7 @@ Content revision v34.10.5:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.10.5</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.11.2</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -4406,6 +4780,60 @@ Content revision v34.10.5:
       <p class="editor-help">העריכה נשמרת במכשיר ומשפיעה על חבילת הבסיס בלבד. חבילות הרחבה מופעלות בנפרד בתפריט. קלף שחור עם שני אזורי _____ מזוהה כ״בחר 2״.</p>
     </div>
   </div>
+
+  <div
+    id="tableGuideModal"
+    class="rules-modal table-top-layer-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="tableGuideTitle"
+    popover="manual"
+    data-table-top-layer="true"
+    data-persistent-table-popover="true"
+    hidden
+  >
+    <div class="rules-dialog table-guide-dialog">
+      <button class="rules-close" type="button" aria-label="סגור">×</button>
+      <h2 id="tableGuideTitle">איך משחקים סביב השולחן?</h2>
+
+      <p class="table-guide-intro">
+        אין סנכרון בין המכשירים — כל טלפון מנהל יד פרטית, והשולחן עצמו מחבר בין כולם.
+      </p>
+
+      <ol class="table-guide-steps">
+        <li class="table-guide-step">
+          <strong>בוחרים תפקידים</strong>
+          <p>
+            שחקן אחד נכנס כצאר, וכל השאר נכנסים כשחקנים. הצאר מקריא בקול את הקלף השחור.
+          </p>
+        </li>
+
+        <li class="table-guide-step">
+          <strong>מגישים בלי להיחשף</strong>
+          <p>
+            כל שחקן בוחר תשובה ולוחץ ״הגש תשובה״. מניחים את הטלפונים במרכז ומערבבים את המיקומים.
+          </p>
+        </li>
+
+        <li class="table-guide-step">
+          <strong>חושפים וממשיכים</strong>
+          <p>
+            הצאר חושף את התשובות ובוחר מנצח. המנצח מוסיף נקודה, כולם משלימים יד ומחליפים צאר.
+          </p>
+        </li>
+      </ol>
+
+      <p class="table-guide-note">
+        <strong>בקלף ״בחר 2״:</strong>
+        בחרו שני קלפים לפי הסדר שבו הם צריכים להיקרא. שני הקלפים ייחשפו יחד.
+      </p>
+
+      <button id="tableGuideStart" class="table-primary-button table-guide-start" type="button">
+        הבנתי, מתחילים
+      </button>
+    </div>
+  </div>
+
 
   <div id="basicRulesModal" class="rules-modal" role="dialog" aria-modal="true" aria-labelledby="basicRulesTitle" hidden>
     <div class="rules-dialog">
@@ -4581,7 +5009,7 @@ Content revision v34.10.5:
     const BASE_EDITION_YEAR = 2026;
     const CURRENT_EDITION_YEAR = new Date().getFullYear();
     const EDITION_YEAR_TOKEN = "{{YEAR}}";
-    const DECK_CONTENT_VERSION = 33.6;
+    const DECK_CONTENT_VERSION = 33.7;
     const TABLE_STORAGE_KEY = "cah-table-v34";
     const TABLE_SCHEMA_VERSION = 1;
     const TABLE_HAND_SIZE = 10;
@@ -4812,6 +5240,7 @@ Content revision v34.10.5:
 
     let baseBlackCards = [...tokenizedDefaultBlackCards];
     let baseWhiteCards = [...tokenizedDefaultWhiteCards];
+    let baseDeckWasEdited = false;
     let activeExpansionIds = [];
     let blackCards = [];
     let whiteCards = [];
@@ -4935,6 +5364,7 @@ Content revision v34.10.5:
         localStorage.setItem("cah2026",JSON.stringify({
           baseBlackCards,
           baseWhiteCards,
+          baseDeckWasEdited,
           activeExpansionIds,
           // Compatibility fields for older versions of the file.
           blackCards: baseBlackCards,
@@ -4993,6 +5423,65 @@ Content revision v34.10.5:
           replacement || tokenizedCard
         );
       });
+    }
+
+    function looksLikeKnown1002CardState(
+      blackDeck,
+      whiteDeck,
+      state
+    ) {
+      if (
+        (state.deckContentVersion || 0) >= 33.7 ||
+        state.baseDeckWasEdited === true
+      ) {
+        return false;
+      }
+
+      // The seven current expansions contain 607 cards.
+      // A stale built-in base of 395 therefore gives 1,002.
+      if (blackDeck.length + whiteDeck.length !== 395) {
+        return false;
+      }
+
+      const defaultBlack = new Set(
+        tokenizedDefaultBlackCards.map(renderEditionYear)
+      );
+      const defaultWhite = new Set(
+        tokenizedDefaultWhiteCards.map(renderEditionYear)
+      );
+
+      const storedBlack = blackDeck.map(renderEditionYear);
+      const storedWhite = whiteDeck.map(renderEditionYear);
+
+      const allCardsAreBuiltIn =
+        storedBlack.every((card) => defaultBlack.has(card)) &&
+        storedWhite.every((card) => defaultWhite.has(card));
+
+      if (!allCardsAreBuiltIn) {
+        return false;
+      }
+
+      const blackMarkers = [
+        "הממשלה מבטיחה לפתור הכול באמצעות _____.",
+        "מה הדבר היחיד שמחזיק אותי שפוי בעבודה הזאת? _____.",
+        "בדייט הראשון הכול הלך מצוין, עד ששלפתי את _____.",
+        "מה תמיד הורס חתונה ישראלית? _____."
+      ];
+
+      const whiteMarkers = [
+        "אבא בפאניקה",
+        "טחינה בכמות מדאיגה",
+        "טעות קולוסלית במשרד הפנים",
+        "אפליקציה שעוקבת אחרי הבושה שלי"
+      ];
+
+      const blackSet = new Set(storedBlack);
+      const whiteSet = new Set(storedWhite);
+
+      return (
+        blackMarkers.filter((card) => blackSet.has(card)).length >= 3 &&
+        whiteMarkers.filter((card) => whiteSet.has(card)).length >= 3
+      );
     }
 
     function looksLikeLegacyBuiltInDeck(blackDeck, whiteDeck, state) {
@@ -5946,6 +6435,19 @@ Content revision v34.10.5:
         }
 
         storedWhite = normalizeWhiteDeck(storedWhite);
+        baseDeckWasEdited = Boolean(state.baseDeckWasEdited);
+
+        if (
+          looksLikeKnown1002CardState(
+            storedBlack,
+            storedWhite,
+            state
+          )
+        ) {
+          storedBlack = [...tokenizedDefaultBlackCards];
+          storedWhite = [...tokenizedDefaultWhiteCards];
+          baseDeckWasEdited = false;
+        }
 
         if (
           looksLikeLegacyBuiltInDeck(
@@ -5956,6 +6458,7 @@ Content revision v34.10.5:
         ) {
           baseBlackCards = [...tokenizedDefaultBlackCards];
           baseWhiteCards = [...tokenizedDefaultWhiteCards];
+          baseDeckWasEdited = false;
           activeExpansionIds = [];
           rebuildActiveDeck();
           blackOrder = [];
@@ -5978,7 +6481,7 @@ Content revision v34.10.5:
         );
         rebuildActiveDeck();
 
-        if ((state.deckContentVersion || 0) < 33.6) {
+        if ((state.deckContentVersion || 0) < 33.7) {
           resetOrders();
           roundHistory = [];
           lastBlack = -1;
@@ -6348,6 +6851,11 @@ Content revision v34.10.5:
     const tableSettingsButton = document.getElementById("tableSettingsButton");
     const tableSettingsOverlay = document.getElementById("tableSettingsOverlay");
     const tableSettingsClose = document.getElementById("tableSettingsClose");
+    const tableGuideButton = document.getElementById("tableGuideButton");
+    const tableRoleGuideButton = document.getElementById("tableRoleGuideButton");
+    const tableGuideSpotlight = document.getElementById("tableGuideSpotlight");
+    const tableGuideModal = document.getElementById("tableGuideModal");
+    const tableGuideStart = document.getElementById("tableGuideStart");
     const tableRegularModeButton = document.getElementById("tableRegularModeButton");
     const tableResetGameButton = document.getElementById("tableResetGameButton");
     const tableResetGameLabel = document.getElementById("tableResetGameLabel");
@@ -6379,6 +6887,10 @@ Content revision v34.10.5:
     let visibleListCards = [];
     let wakeLockSentinel = null;
     let wakeLockWanted = false;
+    const appUpdateBanner = document.getElementById("appUpdateBanner");
+    const appUpdateNow = document.getElementById("appUpdateNow");
+    const appUpdateLater = document.getElementById("appUpdateLater");
+
     let deferredInstallPrompt = null;
 
     const modalReturnFocus = new WeakMap();
@@ -6402,9 +6914,10 @@ Content revision v34.10.5:
       if (typeof modal.showPopover === "function") {
         try {
           if (!modal.matches(":popover-open")) {
+            void modal.offsetWidth;
             modal.showPopover();
           }
-          return;
+          return true;
         } catch (error) {
           console.warn(
             "Could not open table modal in Top Layer",
@@ -6438,8 +6951,14 @@ Content revision v34.10.5:
         }
       }
 
-      modal.removeAttribute("popover");
-      modal.classList.remove("table-top-layer-modal");
+      if (
+        modal.dataset.persistentTablePopover !== "true"
+      ) {
+        modal.removeAttribute("popover");
+        modal.classList.remove("table-top-layer-modal");
+      }
+
+      return false;
     }
 
     function closeTableTopLayerModal(modal) {
@@ -6460,9 +6979,13 @@ Content revision v34.10.5:
         }
       }
 
-      modal.removeAttribute("popover");
-      modal.classList.remove("table-top-layer-modal");
-      delete modal.dataset.tableTopLayer;
+      if (
+        modal.dataset.persistentTablePopover !== "true"
+      ) {
+        modal.removeAttribute("popover");
+        modal.classList.remove("table-top-layer-modal");
+        delete modal.dataset.tableTopLayer;
+      }
     }
 
     const modalRootSelector = [
@@ -7723,6 +8246,7 @@ Content revision v34.10.5:
 
       baseBlackCards=normalizeEditionDeck(b);
       baseWhiteCards=normalizeWhiteDeck(w);
+      baseDeckWasEdited = options.markEdited !== false;
 
       if(Array.isArray(options.activeExpansionIds)){
         activeExpansionIds=validExpansionIds(options.activeExpansionIds);
@@ -7780,11 +8304,28 @@ Content revision v34.10.5:
     }
 
     function closeRulesModal(modal) {
+      if (
+        typeof tableGuideModal !== "undefined" &&
+        modal === tableGuideModal
+      ) {
+        clearTimeout(tableGuideOpenTimer);
+        tableGuideOpening = false;
+      }
+
       closeTableTopLayerModal(modal);
       modal.classList.remove("is-open");
       modal.hidden = true;
       syncModalOpenState();
       restoreModalTrigger(modal);
+
+      if (
+        modal === tableGuideModal &&
+        !hasSeenTableGuide()
+      ) {
+        requestAnimationFrame(
+          syncTableGuideFirstRunUi
+        );
+      }
     }
 
     basicRulesButton.addEventListener("click", () => openRulesModal(basicRulesModal));
@@ -8641,6 +9182,10 @@ Content revision v34.10.5:
     const tableRevealBack = document.getElementById("tableRevealBack");
     const tableModeMenuButton = document.getElementById("tableModeMenuButton");
 
+    const TABLE_GUIDE_SEEN_KEY = "cah-table-guide-v3-seen";
+    let tableGuideSeenThisSession = false;
+    let tableGuideOpening = false;
+    let tableGuideOpenTimer = 0;
     let tableState = null;
     let tableCurrentHandIndex = 0;
     let tableStatusTimer = 0;
@@ -9008,7 +9553,7 @@ Content revision v34.10.5:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.10.5 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.11.2 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
@@ -9139,6 +9684,168 @@ Content revision v34.10.5:
       renderTableRoleScreen();
     }
 
+    function hasSeenTableGuide() {
+      if (tableGuideSeenThisSession) {
+        return true;
+      }
+
+      try {
+        return (
+          localStorage.getItem(TABLE_GUIDE_SEEN_KEY) === "1"
+        );
+      } catch {
+        return false;
+      }
+    }
+
+    function syncTableGuideFirstRunUi() {
+      const seen = hasSeenTableGuide();
+      const roleScreenVisible =
+        !tableAppOverlay.hidden &&
+        !tableRoleScreen.hidden;
+
+      tableRoleGuideButton.hidden = seen;
+      tableGuideSpotlight.hidden =
+        seen || !roleScreenVisible;
+
+      tableRoleGuideButton.classList.toggle(
+        "is-spotlighted",
+        !seen && roleScreenVisible
+      );
+    }
+
+    function dismissTableGuideSpotlight() {
+      tableGuideSpotlight.hidden = true;
+      tableRoleGuideButton.classList.remove(
+        "is-spotlighted",
+        "spotlight-nudge"
+      );
+    }
+
+    function markTableGuideSeen() {
+      tableGuideSeenThisSession = true;
+
+      try {
+        localStorage.setItem(TABLE_GUIDE_SEEN_KEY, "1");
+      } catch {
+        // The guide still stays dismissed for the current session.
+      }
+
+      syncTableGuideFirstRunUi();
+    }
+
+    function tableGuideIsOpen() {
+      if (
+        tableGuideModal.hidden ||
+        !tableGuideModal.classList.contains("is-open")
+      ) {
+        return false;
+      }
+
+      if (
+        typeof tableGuideModal.showPopover === "function"
+      ) {
+        try {
+          return tableGuideModal.matches(":popover-open");
+        } catch {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    function showTableGuideNow() {
+      tableGuideModal.hidden = false;
+      tableGuideModal.classList.add("is-open");
+      void tableGuideModal.offsetWidth;
+      revealTableTopLayerModal(tableGuideModal);
+      syncModalOpenState();
+
+      focusInsideModal(
+        tableGuideModal,
+        tableGuideModal.querySelector(".rules-close")
+      );
+
+      requestAnimationFrame(() => {
+        if (tableGuideIsOpen()) {
+          tableGuideOpening = false;
+          return;
+        }
+
+        // Android may need one layout cycle after another overlay closes.
+        tableGuideOpenTimer = window.setTimeout(() => {
+          try {
+            tableGuideModal.hidden = false;
+            tableGuideModal.classList.add("is-open");
+            void tableGuideModal.offsetWidth;
+            revealTableTopLayerModal(tableGuideModal);
+            syncModalOpenState();
+          } finally {
+            tableGuideOpening = false;
+          }
+        }, 80);
+      });
+    }
+
+    function openTableGuide(event) {
+      event?.preventDefault();
+      event?.stopPropagation();
+
+      if (
+        tableGuideOpening ||
+        tableGuideIsOpen()
+      ) {
+        return;
+      }
+
+      tableGuideOpening = true;
+      clearTimeout(tableGuideOpenTimer);
+      dismissTableGuideSpotlight();
+
+      const settingsWasOpen =
+        tableSettingsOverlay &&
+        !tableSettingsOverlay.hidden;
+
+      closeTableSettings();
+
+      if (
+        typeof tableGuideModal.hidePopover === "function"
+      ) {
+        try {
+          if (tableGuideModal.matches(":popover-open")) {
+            tableGuideModal.hidePopover();
+          }
+        } catch {
+          // No stale popover was open.
+        }
+      }
+
+      tableGuideModal.classList.remove("is-open");
+      tableGuideModal.hidden = true;
+      syncModalOpenState();
+
+      if (settingsWasOpen) {
+        requestAnimationFrame(showTableGuideNow);
+      } else {
+        showTableGuideNow();
+      }
+    }
+
+    function maybeOpenTableGuide() {
+      // First run now highlights the button instead of opening a
+      // modal without the player's explicit action.
+      requestAnimationFrame(() => {
+        syncTableGuideFirstRunUi();
+
+        if (!hasSeenTableGuide()) {
+          tableRoleGuideButton.focus({
+            preventScroll: true
+          });
+        }
+      });
+    }
+
     function openTableSettings() {
       pendingTableExpansionIds = [
         ...validExpansionIds(tableState.activePacks)
@@ -9192,6 +9899,12 @@ Content revision v34.10.5:
 
     function closeTableApp() {
       closeTableSettings();
+      dismissTableGuideSpotlight();
+
+      if (!tableGuideModal.hidden) {
+        closeRulesModal(tableGuideModal);
+      }
+
       tableAppOverlay.classList.remove("is-open");
       tableAppOverlay.hidden = true;
       document.body.classList.remove("table-mode-active");
@@ -9230,6 +9943,7 @@ Content revision v34.10.5:
       tableAppOverlay.classList.add("is-open");
       syncModalOpenState();
       showTableRoleSelection();
+      maybeOpenTableGuide();
     }
 
     function setTableScreen(screen) {
@@ -9316,6 +10030,7 @@ Content revision v34.10.5:
       if (!tableState) return;
       tablePlayerName.value = tableState.playerName;
       renderTableDeckSummary();
+      syncTableGuideFirstRunUi();
     }
 
     function enterTablePlayer() {
@@ -9751,6 +10466,23 @@ Content revision v34.10.5:
       tableSetStatus("משחק השולחן אופס", 2200);
     });
 
+    tableGuideButton.addEventListener("click", openTableGuide);
+    tableRoleGuideButton.addEventListener("click", openTableGuide);
+
+    tableGuideSpotlight.addEventListener("click", () => {
+      tableRoleGuideButton.classList.remove("spotlight-nudge");
+      void tableRoleGuideButton.offsetWidth;
+      tableRoleGuideButton.classList.add("spotlight-nudge");
+      tableRoleGuideButton.focus({
+        preventScroll: true
+      });
+    });
+
+    tableGuideStart.addEventListener("click", () => {
+      markTableGuideSeen();
+      closeRulesModal(tableGuideModal);
+    });
+
     tableOpenCardBrowser.addEventListener("click", () => {
       closeTableSettings();
       prepareTableTopLayerModal(listBrowserModal);
@@ -9871,7 +10603,81 @@ Content revision v34.10.5:
     });
 
 
+    let pendingServiceWorkerRegistration = null;
+    let reloadForServiceWorkerUpdate = false;
+
+    function hideAppUpdateBanner() {
+      appUpdateBanner.hidden = true;
+    }
+
+    function showAppUpdateBanner(registration) {
+      if (!registration?.waiting) {
+        return;
+      }
+
+      pendingServiceWorkerRegistration = registration;
+      appUpdateNow.disabled = false;
+      appUpdateNow.textContent = "עדכן עכשיו";
+      appUpdateBanner.hidden = false;
+    }
+
+    function watchServiceWorkerRegistration(registration) {
+      if (registration.waiting) {
+        showAppUpdateBanner(registration);
+      }
+
+      registration.addEventListener("updatefound", () => {
+        const installingWorker = registration.installing;
+
+        if (!installingWorker) {
+          return;
+        }
+
+        installingWorker.addEventListener("statechange", () => {
+          if (
+            installingWorker.state === "installed" &&
+            navigator.serviceWorker.controller &&
+            registration.waiting
+          ) {
+            showAppUpdateBanner(registration);
+          }
+        });
+      });
+    }
+
+    appUpdateLater.addEventListener("click", hideAppUpdateBanner);
+
+    appUpdateNow.addEventListener("click", () => {
+      const waitingWorker =
+        pendingServiceWorkerRegistration?.waiting;
+
+      if (!waitingWorker) {
+        hideAppUpdateBanner();
+        return;
+      }
+
+      reloadForServiceWorkerUpdate = true;
+      appUpdateNow.disabled = true;
+      appUpdateNow.textContent = "מעדכן…";
+
+      waitingWorker.postMessage({
+        type: "SKIP_WAITING"
+      });
+    });
+
     if ("serviceWorker" in navigator && window.isSecureContext) {
+      navigator.serviceWorker.addEventListener(
+        "controllerchange",
+        () => {
+          if (!reloadForServiceWorkerUpdate) {
+            return;
+          }
+
+          reloadForServiceWorkerUpdate = false;
+          window.location.reload();
+        }
+      );
+
       window.addEventListener("load", async () => {
         try {
           const registration = await navigator.serviceWorker.register(
@@ -9882,7 +10688,17 @@ Content revision v34.10.5:
             }
           );
 
+          watchServiceWorkerRegistration(registration);
           registration.update();
+
+          document.addEventListener(
+            "visibilitychange",
+            () => {
+              if (document.visibilityState === "visible") {
+                registration.update();
+              }
+            }
+          );
         } catch (error) {
           console.warn("Service worker registration failed", error);
         }
