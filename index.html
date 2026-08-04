@@ -1,13 +1,10 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.12.0:
-- Rewrites the physical table-mode guide in a shorter, sharper and more playful tone
-- Renames both guide entry buttons to “How to survive an entire evening without a server?”
-- Clarifies that the most recent pooper starts as czar
-- Explains anonymous phone shuffling as protection against czar favoritism
-- Clarifies that the black card is reread before every answer and the czar role moves right
-- Updates the submitted-answer screen with the same anti-favoritism instruction
-- Preserves all v34.11.9 behavior, 1,040-card migration, fullscreen, Top Layer and PWA update flows
+Content revision v34.13.4:
+- Keeps the point-toggle button fixed on the right before and after awarding a point
+- Shows “🏆 התשובה הזוכה” on the left only after a point is awarded
+- Adds a subtle fade-in animation to the winner title
+- Preserves all v34.13.4 table-mode, scoring, fullscreen and PWA behavior
 - Internal deck content version remains 33.8
 -->
 
@@ -29,8 +26,8 @@ Content revision v34.12.0:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.12.0" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.12.0" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.13.3" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.13.3" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -40,7 +37,7 @@ Content revision v34.12.0:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.12.0" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.13.3" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2536,7 +2533,7 @@ Content revision v34.12.0:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.12.0
+       Offline table game — v34.13.4
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -2713,6 +2710,44 @@ Content revision v34.12.0:
       font-weight: 800;
       line-height: 1.08;
       letter-spacing: -.035em;
+    }
+
+    .table-screen-hint {
+      max-width: 620px;
+      margin: 5px 0 0;
+      color: #aaa;
+      font-size: clamp(.82rem, 2.8vw, .96rem);
+      font-weight: 550;
+      line-height: 1.42;
+    }
+
+    .table-screen-hint[hidden] {
+      display: none !important;
+    }
+
+    .table-app-overlay.is-czar-screen .table-toolbar > div:first-child {
+      flex: 1;
+      min-width: 0;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .table-app-overlay.is-czar-screen .table-screen-hint {
+      margin-inline: 0;
+      text-align: right;
+    }
+
+    .table-app-overlay.is-reveal-screen .table-toolbar {
+      display: none;
+    }
+
+    .table-app-overlay.is-reveal-screen .table-app-shell {
+      padding-top: max(10px, env(safe-area-inset-top));
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+
+    .table-app-overlay.is-reveal-screen #tableFullscreenButton {
+      display: none !important;
     }
 
     .table-toolbar-actions {
@@ -3148,7 +3183,12 @@ Content revision v34.12.0:
       .table-role-guide-button.is-spotlighted,
       .table-role-guide-button.is-spotlighted::after,
       .table-role-guide-button.spotlight-nudge,
-      .table-hand-nav.is-pressed .table-hand-nav-icon {
+      .table-hand-nav.is-pressed .table-hand-nav-icon,
+      .table-reveal-card.is-winner,
+      .table-reveal-card.is-winner::after,
+      .table-reveal-card.is-celebrating,
+      .table-reveal-scroll-cue svg,
+      .table-winner-title:not([hidden]) {
         animation: none !important;
       }
     }
@@ -3256,11 +3296,21 @@ Content revision v34.12.0:
 
     .table-czar-layout {
       display: grid;
-      grid-template-columns: minmax(0, 620px) minmax(230px, 340px);
+      grid-template-columns: minmax(0, 620px);
       justify-content: center;
-      align-items: center;
-      gap: clamp(18px, 4vw, 44px);
-      min-height: calc(100dvh - 130px);
+      align-items: start;
+      min-height: calc(100dvh - 154px);
+    }
+
+    .table-czar-main {
+      display: grid;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .table-czar-done {
+      width: min(100%, 420px);
+      margin: 0 auto;
     }
 
     .table-card {
@@ -3359,20 +3409,7 @@ Content revision v34.12.0:
       animation: refreshSpin .38s cubic-bezier(.4,0,.2,1);
     }
 
-    .table-side-panel {
-      padding: 0 10px 2px;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      text-align: center;
-    }
 
-    .table-side-panel p {
-      margin: 0;
-      color: #aaa;
-      line-height: 1.5;
-      font-size: .9rem;
-    }
 
     .table-primary-button,
     .table-secondary-button {
@@ -3459,32 +3496,23 @@ Content revision v34.12.0:
       font-size: .8rem;
     }
 
-    .table-score-control {
+    .table-score-display {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 5px;
+      justify-content: center;
+      min-height: 42px;
+      padding: 7px 15px;
       border: 1px solid #373737;
       border-radius: 999px;
       background: #1e1e1e;
+      color: #f2f2ee;
     }
 
-    .table-score-control button {
-      width: 36px;
-      height: 36px;
-      padding: 0;
-      border-radius: 50%;
-      background: #303030;
-      color: #fff;
-      font-size: 1.15rem;
-      font-weight: 700;
-    }
-
-    .table-score-control strong {
-      min-width: 72px;
+    .table-score-display strong {
+      min-width: 76px;
       text-align: center;
       font-size: .9rem;
-      font-weight: 650;
+      font-weight: 700;
     }
 
     .table-pick-toggle {
@@ -3884,9 +3912,71 @@ Content revision v34.12.0:
       margin-top: 24px;
     }
 
+    .table-winner-toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: "winner-title point-action";
+      align-items: center;
+      gap: 10px;
+      direction: ltr;
+      width: min(100%, 560px);
+      margin: 0 auto 8px;
+      padding: 8px 10px;
+      border: 1px solid #3a3a3a;
+      border-radius: 17px;
+      background: rgba(28,28,28,.96);
+      box-shadow: 0 12px 34px rgba(0,0,0,.34);
+    }
+
+    .table-winner-title {
+      grid-area: winner-title;
+      justify-self: start;
+      min-width: 0;
+      direction: rtl;
+      color: #ffe89a;
+      font-size: clamp(.86rem, 3.5vw, 1rem);
+      font-weight: 850;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .table-winner-title:not([hidden]) {
+      animation: tableWinnerTitleFadeIn .34s ease-out both;
+    }
+
+    .table-winner-title[hidden] {
+      display: none !important;
+    }
+
+    @keyframes tableWinnerTitleFadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .table-winner-score-actions {
+      grid-area: point-action;
+      justify-self: end;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      direction: rtl;
+    }
+    .table-winner-add-point { min-height:40px; padding:9px 12px; border-radius:12px; background:#f7f7f3; color:#111; font-size:.82rem; font-weight:800; }
+    .table-winner-add-point[aria-pressed="true"] { background:#d9c26f; color:#1d1808; }
+
     .table-reveal-layout {
-      align-content: center;
-      gap: 18px;
+      align-content: start;
+      gap: 12px;
+      min-height: auto;
+      padding-top: 0;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
     }
 
     .table-reveal-cards {
@@ -3898,13 +3988,33 @@ Content revision v34.12.0:
     }
 
     .table-reveal-cards.is-double {
-      grid-template-columns: repeat(2, minmax(0, 430px));
+      grid-template-columns: minmax(0, 520px);
     }
 
     .table-reveal-card {
-      min-height: min(66dvh, 680px);
+      min-height: min(55dvh, 590px);
       aspect-ratio: auto;
+      overflow: hidden;
+      isolation: isolate;
+      transition: transform .28s ease, border-color .28s ease, box-shadow .28s ease, color .28s ease;
     }
+    .table-reveal-card.is-winner {
+      border-color:#d7b948;
+      background:linear-gradient(135deg,#fff7c9 0%,#d6ae35 28%,#fff2a9 48%,#b88918 72%,#f8dd79 100%);
+      background-size:170% 170%;
+      color:#171205;
+      box-shadow:0 0 0 3px rgba(255,222,112,.24),0 24px 76px rgba(181,132,20,.42);
+      animation:tableWinnerMetallic 4.8s ease-in-out infinite;
+    }
+    .table-reveal-card.is-winner::after {
+      content:""; position:absolute; inset:-45%; z-index:-1; transform:translateX(-62%) rotate(18deg);
+      background:linear-gradient(90deg,transparent 36%,rgba(255,255,255,.78) 50%,transparent 64%);
+      animation:tableWinnerSweep 4.8s ease-in-out infinite; pointer-events:none;
+    }
+    .table-reveal-card.is-celebrating { animation:tableWinnerPop .9s cubic-bezier(.18,.88,.28,1.2),tableWinnerMetallic 4.8s ease-in-out .9s infinite; }
+    @keyframes tableWinnerPop { 0%{transform:scale(.94) rotate(-.6deg)} 55%{transform:scale(1.035) rotate(.35deg)} 100%{transform:scale(1) rotate(0)} }
+    @keyframes tableWinnerMetallic { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+    @keyframes tableWinnerSweep { 0%,58%{transform:translateX(-62%) rotate(18deg)} 82%,100%{transform:translateX(62%) rotate(18deg)} }
 
     .table-reveal-index {
       position: static;
@@ -3923,14 +4033,15 @@ Content revision v34.12.0:
     }
 
     .table-reveal-actions {
-      position: sticky;
-      bottom: max(10px, env(safe-area-inset-bottom));
+      position: relative;
       z-index: 8;
       display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      justify-self: center;
+      gap: 8px;
       width: min(100%, 520px);
-      padding: 10px;
+      margin-bottom: 0;
+      padding: 8px;
       border: 1px solid #353535;
       border-radius: 19px;
       background: rgba(14,14,14,.94);
@@ -3942,15 +4053,59 @@ Content revision v34.12.0:
 
     .table-reveal-actions .table-primary-button,
     .table-reveal-actions .table-secondary-button {
+      min-width: 0;
+      min-height: 46px;
       margin-top: 0;
+      padding-inline: 10px;
+      font-size: clamp(.78rem, 3.4vw, .9rem);
+      white-space: nowrap;
+    }
+
+    .table-reveal-scroll-cue {
+      position: fixed;
+      left: 50%;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      z-index: 58;
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      transform: translateX(-50%);
+      border: 1px solid rgba(255,255,255,.26);
+      border-radius: 50%;
+      background: rgba(18,18,18,.9);
+      color: #fff;
+      box-shadow: 0 14px 36px rgba(0,0,0,.48);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .table-reveal-scroll-cue[hidden] {
+      display: none !important;
+    }
+
+    .table-reveal-scroll-cue svg {
+      width: 25px;
+      height: 25px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.35;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      animation: tableRevealCueFloat 1.45s ease-in-out infinite;
+    }
+
+    @keyframes tableRevealCueFloat {
+      0%, 100% { transform: translateY(-2px); }
+      50% { transform: translateY(4px); }
     }
 
     @media (max-width: 760px) {
       .mode-choice-grid,
       .table-role-grid,
       .table-czar-layout,
-      .table-reveal-cards.is-double,
-      .table-reveal-actions {
+      .table-reveal-cards.is-double {
         grid-template-columns: 1fr;
       }
 
@@ -4025,9 +4180,9 @@ Content revision v34.12.0:
       }
 
       .table-czar-layout {
+        grid-template-columns: 1fr;
         min-height: auto;
         align-items: start;
-        gap: 14px;
       }
 
       .table-czar-layout .table-card {
@@ -4048,9 +4203,6 @@ Content revision v34.12.0:
         margin-bottom: 84px;
       }
 
-      .table-side-panel {
-        padding: 0 8px 2px;
-      }
 
       .table-player-header {
         grid-template-columns: 1fr auto;
@@ -4105,9 +4257,20 @@ Content revision v34.12.0:
         margin-bottom: 12px;
       }
 
+      .table-winner-toolbar { gap:7px; padding:7px 8px; }
+      .table-winner-title { font-size:.84rem; }
+      .table-winner-score-actions { gap:5px; }
+      .table-winner-add-point { min-height:38px; padding:8px 9px; font-size:.76rem; }
       .table-reveal-actions {
-        bottom: max(8px, env(safe-area-inset-bottom));
-        padding: 8px;
+        gap: 7px;
+        padding: 7px;
+        margin-bottom: 0;
+      }
+
+      .table-reveal-scroll-cue {
+        bottom: calc(16px + env(safe-area-inset-bottom));
+        width: 46px;
+        height: 46px;
       }
 
       .table-selection-summary {
@@ -4126,9 +4289,12 @@ Content revision v34.12.0:
         height: clamp(28px, 7.6vw, 32px);
       }
 
-      .table-submitted-layout,
-      .table-reveal-layout {
+      .table-submitted-layout {
         min-height: calc(100dvh - 116px);
+      }
+
+      .table-reveal-layout {
+        min-height: auto;
       }
 
       .table-submission-cover {
@@ -4136,9 +4302,8 @@ Content revision v34.12.0:
         aspect-ratio: auto;
       }
 
-      .table-reveal-card {
-        min-height: 39dvh;
-      }
+      .table-reveal-card { min-height:34dvh; }
+      .table-reveal-layout { padding-bottom:max(6px, env(safe-area-inset-bottom)); }
     }
 
   </style>
@@ -4300,6 +4465,9 @@ Content revision v34.12.0:
         <div>
           <p id="tableEyebrow" class="table-eyebrow">משחק סביב השולחן</p>
           <h2 id="tableAppTitle">בחירת תפקיד</h2>
+          <p id="tableCzarHint" class="table-screen-hint" hidden>
+            הקריאו את הקלף בקול. השחקנים בוחרים תשובות בטלפונים שלהם.
+          </p>
         </div>
 
         <div class="table-toolbar-actions">
@@ -4377,38 +4545,38 @@ Content revision v34.12.0:
 
       <section id="tableCzarScreen" class="table-screen" hidden>
         <div class="table-czar-layout">
-          <aside class="table-side-panel">
-            <p id="tableCzarHint">
-              הקריאו את הקלף בקול. השחקנים בוחרים תשובות בטלפונים שלהם.
-            </p>
-          </aside>
+          <div class="table-czar-main">
+            <article id="tableCzarCard" class="table-card table-czar-card black">
+              <div id="tableCzarBlackText" class="table-card-text"></div>
+              <div id="tableCzarChooseTwo" class="choose-two" hidden>בחר 2</div>
 
-          <article id="tableCzarCard" class="table-card table-czar-card black">
-            <div id="tableCzarBlackText" class="table-card-text"></div>
-            <div id="tableCzarChooseTwo" class="choose-two" hidden>בחר 2</div>
+              <button
+                id="tableNewBlack"
+                class="table-czar-submit"
+                type="button"
+                aria-label="סיבוב חדש"
+                title="סיבוב חדש"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M20 6v5h-5"
+                        fill="none" stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M18.2 9A7 7 0 1 0 19 15"
+                        fill="none" stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round"/>
+                </svg>
+              </button>
 
-            <button
-              id="tableNewBlack"
-              class="table-czar-submit"
-              type="button"
-              aria-label="סיבוב חדש"
-              title="סיבוב חדש"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M20 6v5h-5"
-                      fill="none" stroke="currentColor" stroke-width="2.2"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M18.2 9A7 7 0 1 0 19 15"
-                      fill="none" stroke="currentColor" stroke-width="2.2"
-                      stroke-linecap="round"/>
-              </svg>
+              <div class="brand">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span>קלפים נגד האנושות</span>
+              </div>
+            </article>
+
+            <button id="tableCzarDone" class="table-secondary-button table-czar-done" type="button">
+              סיימתי כצאר
             </button>
-
-            <div class="brand">
-              <span class="brand-mark" aria-hidden="true"></span>
-              <span>קלפים נגד האנושות</span>
-            </div>
-          </article>
+          </div>
         </div>
       </section>
 
@@ -4420,10 +4588,8 @@ Content revision v34.12.0:
               <span id="tablePlayerMeta">10 קלפים ביד</span>
             </div>
 
-            <div class="table-score-control" aria-label="מונה נקודות אישי">
-              <button id="tableScoreMinus" type="button" aria-label="הפחת נקודה">−</button>
+            <div class="table-score-display" aria-label="ניקוד אישי">
               <strong id="tableScoreValue">0 נקודות</strong>
-              <button id="tableScorePlus" type="button" aria-label="הוסף נקודה">＋</button>
             </div>
           </div>
 
@@ -4505,16 +4671,39 @@ Content revision v34.12.0:
         </div>
 
         <div id="tableRevealView" class="table-player-view" hidden>
+          <div class="table-winner-toolbar">
+            <strong id="tableWinnerTitle" class="table-winner-title" hidden>🏆 התשובה הזוכה</strong>
+            <div class="table-winner-score-actions">
+              <button
+                id="tableAwardPoint"
+                class="table-winner-add-point"
+                type="button"
+                aria-pressed="false"
+              >＋ הוסף נקודה</button>
+            </div>
+          </div>
+
           <div class="table-reveal-layout">
             <div id="tableRevealCards" class="table-reveal-cards"></div>
-
             <div id="tableRevealActions" class="table-reveal-actions">
-              <button id="tableUseCards" class="table-primary-button" type="button">
-                השתמש והשלם יד
-              </button>
+              <button id="tableUseCards" class="table-primary-button" type="button">השלם יד</button>
+              <button id="tableBecomeCzar" class="table-secondary-button" type="button">אני הצאר הבא</button>
             </div>
           </div>
         </div>
+
+        <button
+          id="tableRevealScrollCue"
+          class="table-reveal-scroll-cue"
+          type="button"
+          aria-label="עבור לפעולות הסיבוב"
+          title="עבור לפעולות הסיבוב"
+          hidden
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m6.5 9 5.5 5.5L17.5 9"></path>
+          </svg>
+        </button>
       </section>
 
       <button
@@ -4799,31 +4988,10 @@ Content revision v34.12.0:
           </button>
         </section>
 
-        <section class="settings-section" aria-labelledby="helpMenuSection">
-          <div id="helpMenuSection" class="settings-section-title">עזרה</div>
-
-          <button
-            id="basicRulesButton"
-            class="settings-action"
-            type="button"
-            data-close-settings="true"
-          >
-            💩 חוקים בסיסיים 💩
-          </button>
-
-          <button
-            id="houseRulesButton"
-            class="settings-action"
-            type="button"
-            data-close-settings="true"
-          >
-            🃏 חוקי הבית 🃏
-          </button>
-        </section>
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.12.0 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.13.4 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -4946,18 +5114,11 @@ Content revision v34.12.0:
             🪑 איך לעבור ערב שלם בלי שרת?
           </button>
 
-          <button id="tableBasicRulesButton" class="settings-action" type="button">
-            💩 חוקים בסיסיים 💩
-          </button>
-
-          <button id="tableHouseRulesButton" class="settings-action" type="button">
-            🃏 חוקי הבית 🃏
-          </button>
         </section>
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.12.0</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.13.4</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -7120,8 +7281,6 @@ Content revision v34.12.0:
     const tableOpenCardBrowser = document.getElementById("tableOpenCardBrowser");
     const tableCardBrowserSummary = document.getElementById("tableCardBrowserSummary");
     const tableDeckEditorButton = document.getElementById("tableDeckEditorButton");
-    const tableBasicRulesButton = document.getElementById("tableBasicRulesButton");
-    const tableHouseRulesButton = document.getElementById("tableHouseRulesButton");
     const tableSettingsFooterSummary = document.getElementById("tableSettingsFooterSummary");
 
     let currentListType = "black";
@@ -8624,8 +8783,6 @@ Content revision v34.12.0:
     });
 
 
-    const basicRulesButton = document.getElementById("basicRulesButton");
-    const houseRulesButton = document.getElementById("houseRulesButton");
     const basicRulesModal = document.getElementById("basicRulesModal");
     const houseRulesModal = document.getElementById("houseRulesModal");
 
@@ -8665,8 +8822,6 @@ Content revision v34.12.0:
       }
     }
 
-    basicRulesButton.addEventListener("click", () => openRulesModal(basicRulesModal));
-    houseRulesButton.addEventListener("click", () => openRulesModal(houseRulesModal));
 
     document.querySelectorAll(".rules-modal").forEach((modal) => {
       modal.querySelector(".rules-close").addEventListener("click", () => closeRulesModal(modal));
@@ -9474,6 +9629,7 @@ Content revision v34.12.0:
     const tableAppOverlay = document.getElementById("tableAppOverlay");
     const tableAppTitle = document.getElementById("tableAppTitle");
     const tableEyebrow = document.getElementById("tableEyebrow");
+    const tableCzarHint = document.getElementById("tableCzarHint");
     const tableRoleButton = document.getElementById("tableRoleButton");
     const tableExitButton = document.getElementById("tableExitButton");
     const tableStatus = document.getElementById("tableStatus");
@@ -9487,6 +9643,7 @@ Content revision v34.12.0:
     const tableCzarBlackText = document.getElementById("tableCzarBlackText");
     const tableCzarChooseTwo = document.getElementById("tableCzarChooseTwo");
     const tableNewBlack = document.getElementById("tableNewBlack");
+    const tableCzarDone = document.getElementById("tableCzarDone");
     const tableFullscreenButton = document.getElementById("tableFullscreenButton");
     const tableFullscreenLabel = tableFullscreenButton?.querySelector(
       ".table-overlay-fullscreen-label"
@@ -9496,8 +9653,6 @@ Content revision v34.12.0:
     const tableRevealView = document.getElementById("tableRevealView");
     const tablePlayerDisplayName = document.getElementById("tablePlayerDisplayName");
     const tablePlayerMeta = document.getElementById("tablePlayerMeta");
-    const tableScoreMinus = document.getElementById("tableScoreMinus");
-    const tableScorePlus = document.getElementById("tableScorePlus");
     const tableScoreValue = document.getElementById("tableScoreValue");
     const tablePickOne = document.getElementById("tablePickOne");
     const tablePickTwo = document.getElementById("tablePickTwo");
@@ -9515,7 +9670,11 @@ Content revision v34.12.0:
     const tableSubmittedBack = document.getElementById("tableSubmittedBack");
     const tableRevealCards = document.getElementById("tableRevealCards");
     const tableRevealActions = document.getElementById("tableRevealActions");
+    const tableWinnerTitle = document.getElementById("tableWinnerTitle");
+    const tableAwardPoint = document.getElementById("tableAwardPoint");
     const tableUseCards = document.getElementById("tableUseCards");
+    const tableBecomeCzar = document.getElementById("tableBecomeCzar");
+    const tableRevealScrollCue = document.getElementById("tableRevealScrollCue");
     const tableModeMenuButton = document.getElementById("tableModeMenuButton");
 
     const TABLE_GUIDE_SEEN_KEY = "cah-table-guide-v3-seen";
@@ -9527,6 +9686,8 @@ Content revision v34.12.0:
     let tableStatusTimer = 0;
     let tablePointerStartX = null;
     let tablePointerStartY = null;
+    let tableWinnerCelebrationPending = false;
+    let tableRevealScrollCueFrame = 0;
 
     function tableSetStatus(message, duration = 2200) {
       tableStatus.textContent = message;
@@ -9637,7 +9798,8 @@ Content revision v34.12.0:
           selected: [],
           pickCount: 1,
           view: "hand",
-          score: 0
+          score: 0,
+          winnerAwarded: false
         },
         czar: {
           currentBlack: null,
@@ -9712,7 +9874,8 @@ Content revision v34.12.0:
             Number.isFinite(Number(player.score))
               ? Math.floor(Number(player.score))
               : 0
-          )
+          ),
+          winnerAwarded: Boolean(player.winnerAwarded)
         },
         czar: {
           currentBlack: tableIsCard(czar.currentBlack)
@@ -9889,7 +10052,7 @@ Content revision v34.12.0:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.12.0 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.13.4 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
@@ -10302,8 +10465,18 @@ Content revision v34.12.0:
       tableRoleScreen.hidden = screen !== "role";
       tableCzarScreen.hidden = screen !== "czar";
       tablePlayerScreen.hidden = screen !== "player";
-      tableRoleButton.hidden = screen === "role";
+      tableRoleButton.hidden = screen !== "player";
       tableSettingsButton.hidden = screen !== "role";
+      tableCzarHint.hidden = screen !== "czar";
+      tableAppOverlay.classList.toggle(
+        "is-czar-screen",
+        screen === "czar"
+      );
+
+      if (screen !== "player") {
+        tableAppOverlay.classList.remove("is-reveal-screen");
+        tableRevealScrollCue.hidden = true;
+      }
 
       if (screen !== "role") {
         closeTableSettings();
@@ -10341,15 +10514,8 @@ Content revision v34.12.0:
       } else if (screen === "czar") {
         tableAppTitle.textContent = "מצב צאר";
         tableEyebrow.textContent = "קלף שחור לכולם";
-        tableRoleButton.textContent = "סיימתי כצאר";
-        tableRoleButton.setAttribute(
-          "aria-label",
-          "סיימתי להיות צאר וחזרה לבחירת תפקיד"
-        );
-        tableRoleButton.setAttribute(
-          "title",
-          "סיימתי להיות צאר"
-        );
+        tableCzarHint.textContent =
+          "הקריאו את הקלף בקול. השחקנים בוחרים תשובות בטלפונים שלהם.";
       } else {
         tableAppTitle.textContent = "מצב שחקן";
         tableEyebrow.textContent = "משחק סביב השולחן";
@@ -10403,6 +10569,19 @@ Content revision v34.12.0:
       focusInsideModal(tableAppOverlay, tableNewBlack);
     }
 
+    function finishTableCzar() {
+      tableState.role = "player";
+      tableState.player.view = "hand";
+      tableState.player.winnerAwarded = false;
+      ensureTableHand();
+      saveTableState();
+      setTableScreen("player");
+      renderTablePlayer();
+      haptic(18);
+      tableSetStatus("חזרת למצב שחקן", 1800);
+      focusInsideModal(tableAppOverlay, tablePlayerCard);
+    }
+
     function renderTableCzar() {
       ensureTableBlackCard();
       const card = tableState.czar.currentBlack;
@@ -10449,10 +10628,39 @@ Content revision v34.12.0:
       tableSubmitAnswer.classList.add("is-visible");
     }
 
-    function tableShowRevealActions() {
-      tableScrollToElement(tableRevealActions, "end");
+    function tableRevealActionsNeedScroll() {
+      if (
+        !tableState ||
+        tableState.role !== "player" ||
+        tableState.player.view !== "reveal" ||
+        tableRevealView.hidden ||
+        tableRevealActions.hidden
+      ) {
+        return false;
+      }
+
+      const actionsRect = tableRevealActions.getBoundingClientRect();
+      const overlayRect = tableAppOverlay.getBoundingClientRect();
+      const visibleBottom = Math.min(
+        window.innerHeight,
+        overlayRect.bottom
+      ) - 18;
+
+      return actionsRect.bottom > visibleBottom;
     }
 
+    function syncTableRevealScrollCue() {
+      cancelAnimationFrame(tableRevealScrollCueFrame);
+      tableRevealScrollCueFrame = requestAnimationFrame(() => {
+        tableRevealScrollCue.hidden = !tableRevealActionsNeedScroll();
+      });
+    }
+
+    function scheduleTableRevealScrollCue() {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(syncTableRevealScrollCue);
+      });
+    }
 
     function animateTableCzarRefreshButton() {
       tableNewBlack.classList.remove("is-spinning");
@@ -10568,12 +10776,15 @@ Content revision v34.12.0:
 
     function renderTableRevealCards() {
       const cards = tableSelectedCards();
+      const isWinner = tableState.player.winnerAwarded;
       tableRevealCards.replaceChildren();
       tableRevealCards.classList.toggle("is-double", cards.length === 2);
 
       cards.forEach((card, index) => {
         const article = document.createElement("article");
         article.className = "table-card table-reveal-card white";
+        article.classList.toggle("is-winner", isWinner);
+        article.classList.toggle("is-celebrating", isWinner && tableWinnerCelebrationPending);
 
         const badge = document.createElement("span");
         badge.className = "table-reveal-index";
@@ -10591,7 +10802,26 @@ Content revision v34.12.0:
 
         article.append(badge, text, brand);
         tableRevealCards.append(article);
+
+        if (index === 0) {
+          tableRevealCards.append(tableRevealActions);
+        }
       });
+
+      if (!cards.length) {
+        tableRevealCards.append(tableRevealActions);
+      }
+
+      tableWinnerCelebrationPending = false;
+    }
+
+    function renderTableWinnerState() {
+      const isWinner = tableState.player.winnerAwarded;
+      tableWinnerTitle.hidden = !isWinner;
+      tableAwardPoint.setAttribute("aria-pressed", String(isWinner));
+      tableAwardPoint.textContent = isWinner
+        ? "✓ נקודה נוספה"
+        : "＋ הוסף נקודה";
     }
 
     function renderTablePlayerView() {
@@ -10600,10 +10830,13 @@ Content revision v34.12.0:
       tableSubmittedView.hidden = view !== "submitted";
       tableRevealView.hidden = view !== "reveal";
 
+      const isReveal = view === "reveal";
+
       if (tableFullscreenButton) {
+        tableFullscreenButton.hidden = isReveal;
         tableFullscreenButton.classList.toggle(
           "is-raised",
-          view !== "hand"
+          !isReveal && view !== "hand"
         );
       }
 
@@ -10612,9 +10845,15 @@ Content revision v34.12.0:
           "אחרי שכולם נעלו תשובה, אוספים ומערבבים את הטלפונים — כדי שהצאר לא יוכל לעשות פרוטקציות.";
       }
 
-      if (view === "reveal") {
+      tableRoleButton.hidden = tableState.role !== "player" || isReveal;
+      tableAppOverlay.classList.toggle("is-reveal-screen", isReveal);
+
+      if (isReveal) {
+        renderTableWinnerState();
         renderTableRevealCards();
-        tableShowRevealActions();
+        scheduleTableRevealScrollCue();
+      } else {
+        tableRevealScrollCue.hidden = true;
       }
     }
 
@@ -10689,6 +10928,7 @@ Content revision v34.12.0:
       }
 
       tableState.player.view = "submitted";
+      tableState.player.winnerAwarded = false;
       saveTableState();
       haptic(16);
       renderTablePlayer();
@@ -10699,50 +10939,80 @@ Content revision v34.12.0:
       saveTableState();
       haptic(14);
       renderTablePlayer();
+      tableAppOverlay.scrollTo({
+        top: 0,
+        behavior: "auto"
+      });
+      scheduleTableRevealScrollCue();
     }
 
     function returnTableAnswerToHand() {
       tableState.player.view = "hand";
+      tableState.player.winnerAwarded = false;
       saveTableState();
       renderTablePlayer();
     }
 
-    function useSelectedTableCards() {
-      const selectedIndexes = [...tableState.player.selected]
-        .sort((a, b) => b - a);
+    function consumeSelectedTableCards() {
+      const selectedIndexes = [...tableState.player.selected].sort((a, b) => b - a);
+      if (!selectedIndexes.length) return false;
+      selectedIndexes.forEach((index) => {
+        const [removed] = tableState.player.hand.splice(index, 1);
+        if (removed) tableState.player.usedWhite.push(tableCloneCard(removed));
+      });
+      tableState.player.selected = [];
+      tableCurrentHandIndex = Math.min(tableCurrentHandIndex, Math.max(0, tableState.player.hand.length - 1));
+      ensureTableHand();
+      return true;
+    }
 
-      if (!selectedIndexes.length) {
+    function useSelectedTableCards() {
+      if (!consumeSelectedTableCards()) {
         returnTableAnswerToHand();
         return;
       }
-
-      selectedIndexes.forEach((index) => {
-        const [removed] = tableState.player.hand.splice(index, 1);
-        if (removed) {
-          tableState.player.usedWhite.push(tableCloneCard(removed));
-        }
-      });
-
-      tableState.player.selected = [];
       tableState.player.view = "hand";
-      tableCurrentHandIndex = Math.min(
-        tableCurrentHandIndex,
-        Math.max(0, tableState.player.hand.length - 1)
-      );
-      ensureTableHand();
+      tableState.player.winnerAwarded = false;
       saveTableState();
       haptic(18);
       tableSetStatus("היד הושלמה מחדש לעשרה קלפים");
       renderTablePlayer();
     }
 
-    function changeTableScore(delta) {
-      tableState.player.score = Math.max(
-        0,
-        tableState.player.score + delta
-      );
+    function toggleTableWinnerPoint() {
+      const wasWinner = tableState.player.winnerAwarded;
+
+      if (wasWinner) {
+        tableState.player.score = Math.max(
+          0,
+          tableState.player.score - 1
+        );
+        tableState.player.winnerAwarded = false;
+        haptic(10);
+        tableSetStatus("הנקודה בוטלה", 1800);
+      } else {
+        tableState.player.score += 1;
+        tableState.player.winnerAwarded = true;
+        tableWinnerCelebrationPending = true;
+        haptic(32);
+      }
+
       saveTableState();
-      renderTablePlayerIdentity();
+      renderTablePlayer();
+    }
+
+    function becomeTableCzarFromReveal() {
+      consumeSelectedTableCards();
+      tableState.player.view = "hand";
+      tableState.player.winnerAwarded = false;
+      tableState.role = "czar";
+      drawTableBlackCard();
+      saveTableState();
+      setTableScreen("czar");
+      renderTableCzar();
+      haptic(22);
+      tableSetStatus("עברת למצב צאר · סיבוב חדש", 2200);
+      focusInsideModal(tableAppOverlay, tableNewBlack);
     }
 
     tableSettingsButton.addEventListener("click", openTableSettings);
@@ -10851,23 +11121,12 @@ Content revision v34.12.0:
       openEditor();
     });
 
-    tableBasicRulesButton.addEventListener("click", () => {
-      closeTableSettings();
-      prepareTableTopLayerModal(basicRulesModal);
-      openRulesModal(basicRulesModal);
-    });
-
-    tableHouseRulesButton.addEventListener("click", () => {
-      closeTableSettings();
-      prepareTableTopLayerModal(houseRulesModal);
-      openRulesModal(houseRulesModal);
-    });
-
     modeRegularButton.addEventListener("click", activateRegularMode);
     modeTableButton.addEventListener("click", openTableApp);
     tableModeMenuButton.addEventListener("click", openTableApp);
     tableExitButton.addEventListener("click", showModeSelection);
     tableRoleButton.addEventListener("click", showTableRoleSelection);
+    tableCzarDone.addEventListener("click", finishTableCzar);
     tableChoosePlayer.addEventListener("click", enterTablePlayer);
     tableChooseCzar.addEventListener("click", enterTableCzar);
 
@@ -10890,8 +11149,6 @@ Content revision v34.12.0:
 
     bindFullscreenButton(tableFullscreenButton);
 
-    tableScoreMinus.addEventListener("click", () => changeTableScore(-1));
-    tableScorePlus.addEventListener("click", () => changeTableScore(1));
     tablePickOne.addEventListener("click", () => setTablePickCount(1));
     tablePickTwo.addEventListener("click", () => setTablePickCount(2));
     function animateTableHandNav(button) {
@@ -10916,7 +11173,25 @@ Content revision v34.12.0:
     tableSubmitAnswer.addEventListener("click", submitTableAnswer);
     tableRevealAnswer.addEventListener("click", revealTableAnswer);
     tableSubmittedBack.addEventListener("click", returnTableAnswerToHand);
+    tableAwardPoint.addEventListener("click", toggleTableWinnerPoint);
     tableUseCards.addEventListener("click", useSelectedTableCards);
+    tableBecomeCzar.addEventListener("click", becomeTableCzarFromReveal);
+    tableRevealScrollCue.addEventListener("click", () => {
+      haptic(10);
+      tableScrollToElement(tableRevealActions, "end");
+    });
+
+    tableAppOverlay.addEventListener(
+      "scroll",
+      syncTableRevealScrollCue,
+      { passive: true }
+    );
+
+    window.addEventListener(
+      "resize",
+      scheduleTableRevealScrollCue,
+      { passive: true }
+    );
 
     tablePlayerCard.addEventListener("pointerdown", (event) => {
       tablePointerStartX = event.clientX;
