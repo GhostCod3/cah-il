@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.11.4:
-- Compacts the table guide so every step title sits beside its number
-- Reduces mobile guide spacing and typography to fit the full guide in one viewport on common phones
-- Silences the first automatically generated regular-game round behind the opening warning
-- Removes “Back to hand” after an answer has already been revealed
-- Keeps “Back to hand” available before revealing the submitted answer
-- Preserves the 1,040-card migration, onboarding spotlight, fullscreen, Top Layer and explicit PWA update flows
+Content revision v34.11.6:
+- Removes the disclosure arrow that overlapped the table-deck summary text
+- Adds a subtle repeating shimmer across the full deck-summary button
+- Keeps the direct shortcut to expanded active-pack settings
+- Respects reduced-motion preferences
+- Preserves all v34.11.5 behavior, 1,040-card migration, fullscreen, Top Layer and PWA update flows
 - Internal deck content version remains 33.8
 -->
 
@@ -28,8 +27,8 @@ Content revision v34.11.4:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.11.4" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.11.4" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.11.6" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.11.6" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -39,7 +38,7 @@ Content revision v34.11.4:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.11.4" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.11.6" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2501,7 +2500,7 @@ Content revision v34.11.4:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.11.4
+       Offline table game — v34.11.6
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -2896,16 +2895,81 @@ Content revision v34.11.4:
     }
 
     .table-role-deck-summary {
+      position: relative;
+      display: block;
+      width: 100%;
+      min-height: 46px;
       margin-top: 12px;
-      padding: 9px 12px;
+      padding: 9px 14px;
+      overflow: hidden;
       border: 1px solid #343434;
       border-radius: 12px;
       background: rgba(255,255,255,.035);
       color: #d0d0ca;
+      font: inherit;
       font-size: .84rem;
       font-weight: 700;
       line-height: 1.35;
       text-align: center;
+      cursor: pointer;
+      touch-action: manipulation;
+      isolation: isolate;
+      transition:
+        background .16s ease,
+        border-color .16s ease,
+        transform .12s ease;
+    }
+
+    .table-role-deck-summary::after {
+      content: "";
+      position: absolute;
+      top: -70%;
+      bottom: -70%;
+      left: -34%;
+      width: 24%;
+      z-index: -1;
+      transform: skewX(-18deg);
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(255,255,255,.16),
+          transparent
+        );
+      animation: tableDeckSummaryShimmer 3.2s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .table-role-deck-summary:hover {
+      border-color: #505050;
+      background: rgba(255,255,255,.065);
+    }
+
+    .table-role-deck-summary:focus-visible {
+      outline: 3px solid rgba(255,255,255,.82);
+      outline-offset: 3px;
+    }
+
+    .table-role-deck-summary:active {
+      transform: scale(.985);
+      background: rgba(255,255,255,.09);
+    }
+
+    @keyframes tableDeckSummaryShimmer {
+      0% {
+        left: -34%;
+      }
+
+      45%,
+      100% {
+        left: 112%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .table-role-deck-summary::after {
+        animation: none;
+      }
     }
 
     .table-role-guide-button {
@@ -4168,7 +4232,13 @@ Content revision v34.11.4:
             אפשר להחליף תפקיד בכל רגע. היד הפרטית שלך נשמרת גם בזמן שאתה הצאר.
           </p>
 
-          <div id="tableRoleDeckSummary" class="table-role-deck-summary"></div>
+          <button
+            id="tableRoleDeckSummary"
+            class="table-role-deck-summary"
+            type="button"
+            aria-label="פתיחת הגדרות חפיסת השולחן והצגת החבילות הפעילות"
+            title="ניהול חבילות פעילות"
+          ></button>
 
           <div
             id="tableGuideSpotlight"
@@ -4640,7 +4710,7 @@ Content revision v34.11.4:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.11.4 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.11.6 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -4774,7 +4844,7 @@ Content revision v34.11.4:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.11.4</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.11.6</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -9643,7 +9713,7 @@ Content revision v34.11.4:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.11.4 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.11.6 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
@@ -9946,6 +10016,28 @@ Content revision v34.11.4:
       tableSettingsOverlay.classList.add("is-open");
       syncModalOpenState();
       focusInsideModal(tableSettingsOverlay, tableSettingsClose);
+    }
+
+    function openTableDeckSettings() {
+      openTableSettings();
+      setTableExpansionPanelOpen(true);
+      renderTableExpansionControls();
+
+      requestAnimationFrame(() => {
+        tableExpansionPanelToggle.focus({
+          preventScroll: true
+        });
+
+        const reduceMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)"
+        ).matches;
+
+        tableExpansionPanelToggle.scrollIntoView({
+          behavior: reduceMotion ? "auto" : "smooth",
+          block: "start",
+          inline: "nearest"
+        });
+      });
     }
 
     function closeTableSettings() {
@@ -10478,6 +10570,10 @@ Content revision v34.11.4:
     }
 
     tableSettingsButton.addEventListener("click", openTableSettings);
+    tableRoleDeckSummary.addEventListener(
+      "click",
+      openTableDeckSettings
+    );
     tableSettingsClose.addEventListener("click", closeTableSettings);
 
     tableSettingsOverlay.addEventListener("click", (event) => {
