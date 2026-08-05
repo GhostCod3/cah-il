@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.14.0:
-- Adds a browser-only installation landing screen before the content warning
-- Lets visitors install the PWA or continue directly to the website version
-- Skips the installation landing screen in an installed standalone PWA
-- Keeps the browser skip choice for the current tab session
-- Moves the edition title above the 18+ symbol on the content-warning screen
-- Removes the floating install shortcut from the table role-selection screen
-- Keeps installation actions in the regular and table settings menus
-- Preserves all v34.13.11 table-mode, scoring, fullscreen, editor and PWA update behavior
+Content revision v34.14.1:
+- Makes the landing-page install button use the real captured browser install prompt
+- Keeps the landing install button disabled until installation is genuinely available
+- Removes the previous timed fallback that turned the button into an instruction-only action
+- Shows a clear unavailable state when the browser does not expose PWA installation
+- Keeps the settings-menu installation buttons on the same shared installation flow
+- Preserves all v34.14.0 opening-screen, table-mode, scoring, fullscreen, editor and update behavior
 - Internal deck content version remains 33.8
 -->
 
@@ -30,8 +28,8 @@ Content revision v34.14.0:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.14.0" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.14.0" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.14.1" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.14.1" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -41,7 +39,7 @@ Content revision v34.14.0:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.14.0" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.14.1" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2612,7 +2610,7 @@ Content revision v34.14.0:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.14.0
+       Offline table game — v34.14.1
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -5066,7 +5064,7 @@ Content revision v34.14.0:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.14.0 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.14.1 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5190,7 +5188,7 @@ Content revision v34.14.0:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.14.0</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.14.1</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -7381,7 +7379,7 @@ Content revision v34.14.0:
 
     let contentWarningAccepted = false;
     let deferredInstallPrompt = null;
-    let browserInstallFallbackReady = false;
+    let browserInstallPromptTimedOut = false;
     let browserInstallFeedbackTimer = null;
     const BROWSER_INSTALL_SKIP_KEY =
       "cah-browser-install-skip-v1";
@@ -7822,20 +7820,16 @@ Content revision v34.14.0:
       }
 
       if (browserInstallButton) {
-        const preparing =
-          !installed &&
-          !available &&
-          !browserInstallFallbackReady;
-
         browserInstallButton.hidden = installed;
-        browserInstallButton.disabled = installed || preparing;
+        browserInstallButton.disabled =
+          installed || !available;
         browserInstallButtonLabel.textContent = installed
           ? "מותקן"
           : available
             ? "התקנה"
-            : preparing
-              ? "מכין התקנה…"
-              : "התקנה";
+            : browserInstallPromptTimedOut
+              ? "התקנה לא זמינה"
+              : "מכין התקנה…";
       }
 
       if (tableSettingsInstallButton) {
@@ -7886,11 +7880,10 @@ Content revision v34.14.0:
 
     async function promptAppInstallation() {
       if (!deferredInstallPrompt) {
-        browserInstallFallbackReady = true;
         updateInstallAppUi();
         showInstallFeedback(
-          "להתקנה, פתח את תפריט הדפדפן ובחר „התקנת האפליקציה” או „הוספה למסך הבית”.",
-          5600
+          "התקנת האפליקציה עדיין אינה זמינה בדפדפן הזה.",
+          3200
         );
         return;
       }
@@ -7938,7 +7931,16 @@ Content revision v34.14.0:
     window.addEventListener("beforeinstallprompt", (event) => {
       event.preventDefault();
       deferredInstallPrompt = event;
+      browserInstallPromptTimedOut = false;
       updateInstallAppUi();
+
+      if (
+        browserInstallGate &&
+        !browserInstallGate.hidden &&
+        document.activeElement === browserContinueButton
+      ) {
+        browserInstallButton.focus();
+      }
     });
 
     window.addEventListener("appinstalled", () => {
@@ -8430,16 +8432,13 @@ Content revision v34.14.0:
       showBrowserInstallGate();
 
       setTimeout(() => {
-        browserInstallFallbackReady = true;
-        updateInstallAppUi();
-
-        if (
-          !browserInstallGate.hidden &&
-          document.activeElement === browserContinueButton
-        ) {
-          browserInstallButton.focus();
+        if (!deferredInstallPrompt) {
+          browserInstallPromptTimedOut = true;
+          updateInstallAppUi();
+          browserInstallFeedback.textContent =
+            "ההתקנה זמינה רק כאשר הדפדפן מאשר שהאתר ניתן להתקנה.";
         }
-      }, 1600);
+      }, 3500);
     }
 
     function closeContentGate() {
@@ -10287,7 +10286,7 @@ Content revision v34.14.0:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.14.0 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.14.1 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
