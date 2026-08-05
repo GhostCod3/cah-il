@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.13.4:
-- Keeps the point-toggle button fixed on the right before and after awarding a point
-- Shows “🏆 התשובה הזוכה” on the left only after a point is awarded
-- Adds a subtle fade-in animation to the winner title
-- Preserves all v34.13.4 table-mode, scoring, fullscreen and PWA behavior
+Content revision v34.13.6:
+- Shows the manual app-update banner only in an installed standalone PWA
+- Keeps detecting and queuing Service Worker updates in a regular browser tab without displaying the banner there
+- Preserves the existing update approval and reload flow for the installed app
+- Preserves all v34.13.5 table-mode, scoring, fullscreen and card-navigation behavior
 - Internal deck content version remains 33.8
 -->
 
@@ -26,8 +26,8 @@ Content revision v34.13.4:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.13.3" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.13.3" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.13.6" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.13.6" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -37,7 +37,7 @@ Content revision v34.13.4:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.13.3" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.13.6" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2533,7 +2533,7 @@ Content revision v34.13.4:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.13.4
+       Offline table game — v34.13.6
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -4601,7 +4601,7 @@ Content revision v34.13.4:
           <div id="tableSelectionSummary" class="table-selection-summary" aria-live="polite"></div>
 
           <div class="table-hand-stage">
-            <button id="tablePrevCard" class="table-hand-nav" type="button" aria-label="קלף קודם">
+            <button id="tablePrevCard" class="table-hand-nav" type="button" aria-label="קלף הבא" title="קלף הבא">
               <svg
                 class="table-hand-nav-icon"
                 viewBox="0 0 24 24"
@@ -4627,7 +4627,7 @@ Content revision v34.13.4:
               </div>
             </article>
 
-            <button id="tableNextCard" class="table-hand-nav" type="button" aria-label="קלף הבא">
+            <button id="tableNextCard" class="table-hand-nav" type="button" aria-label="קלף קודם" title="קלף קודם">
               <svg
                 class="table-hand-nav-icon"
                 viewBox="0 0 24 24"
@@ -4991,7 +4991,7 @@ Content revision v34.13.4:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.13.4 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.13.6 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5118,7 +5118,7 @@ Content revision v34.13.4:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.13.4</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.13.6</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -10052,7 +10052,7 @@ Content revision v34.13.4:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.13.4 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.13.6 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
@@ -11163,12 +11163,12 @@ Content revision v34.13.4:
 
     tablePrevCard.addEventListener("click", () => {
       animateTableHandNav(tablePrevCard);
-      moveTableHand(-1);
+      moveTableHand(1);
     });
 
     tableNextCard.addEventListener("click", () => {
       animateTableHandNav(tableNextCard);
-      moveTableHand(1);
+      moveTableHand(-1);
     });
     tableSubmitAnswer.addEventListener("click", submitTableAnswer);
     tableRevealAnswer.addEventListener("click", revealTableAnswer);
@@ -11258,6 +11258,11 @@ Content revision v34.13.4:
     }
 
     function revealQueuedAppUpdate() {
+      if (!isInstalledPwa()) {
+        hideAppUpdateBanner();
+        return;
+      }
+
       if (
         !contentWarningAccepted ||
         !pendingServiceWorkerRegistration?.waiting
