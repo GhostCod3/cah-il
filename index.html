@@ -1,19 +1,15 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.16.0:
-- Adds 66 approved black cards across seven expansion packs
-- Adds 16 new choose-two black cards
-- Expands the full deck from 1,117 to 1,183 cards
-- Updates totals to 326 black and 857 white cards
-- Replaces two near-duplicate science prompts with original alternatives
-- Revises several prompts for grammar, neutrality and punctuation
-- Moves the Scandinavian human-rights prompt from culture to money
-- Replaces the Scandinavian wording without changing total card count
-- Rewrites one overlapping base-government prompt without changing total card count
-- Migrates the rewritten base prompt on existing unedited installations
-- Resets regular-mode draw order once after the content migration
-- Preserves scores, player names, active packs and table-mode state
-- Internal deck content version advances to 34.16
+Content revision v34.16.1:
+- Adds an install icon to the browser landing-page install button
+- Keeps the browser landing screen visible while Android installs the PWA
+- Replaces the install button with a five-second right-to-left progress meter
+- Waits for the real appinstalled event before showing installation success
+- Shows an animated upward-arrow instruction for opening the installed app
+- Restores the install action and website link when installation is cancelled or fails
+- Offers “Continue on the website anyway” ten seconds after successful installation
+- Preserves all v34.16.0 deck, table-mode, scoring, fullscreen, editor and update behavior
+- Internal deck content version remains 34.16
 -->
 
 <html lang="he" dir="rtl">
@@ -34,8 +30,8 @@ Content revision v34.16.0:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,183 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.0" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.0" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.1" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.1" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -45,7 +41,7 @@ Content revision v34.16.0:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,183 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.0" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.1" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2338,14 +2334,179 @@ Content revision v34.16.0:
     }
 
     .browser-install-button {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
       min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 1.08rem;
       font-weight: 850;
+      transition:
+        border-color .2s ease,
+        background .2s ease,
+        color .2s ease,
+        box-shadow .2s ease;
     }
 
     .browser-install-button:disabled {
       cursor: wait;
       opacity: .72;
+    }
+
+    .browser-install-button.is-installing,
+    .browser-install-button.is-complete {
+      opacity: 1;
+      cursor: default;
+    }
+
+    .browser-install-button.is-installing {
+      border-color: #595959;
+      background: #202020;
+      color: #fff;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+
+    .browser-install-button.is-complete {
+      border-color: #e0c35d;
+      background: #f3d86e;
+      color: #171205;
+      box-shadow:
+        0 0 0 3px rgba(231,198,87,.13),
+        0 15px 34px rgba(122,88,10,.2);
+    }
+
+    .browser-install-progress {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(
+          90deg,
+          #d4b23f 0%,
+          #ffe99b 48%,
+          #e0bd47 100%
+        );
+      transform: scaleX(0);
+      transform-origin: right center;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .browser-install-button.is-installing .browser-install-progress {
+      opacity: 1;
+      animation:
+        browserInstallProgressFill 5s
+        cubic-bezier(.18,.76,.22,1) forwards;
+    }
+
+    .browser-install-button.is-complete .browser-install-progress {
+      opacity: 1;
+      transform: scaleX(1);
+      transition: transform .35s ease;
+    }
+
+    .browser-install-button-content {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      direction: rtl;
+      pointer-events: none;
+    }
+
+    .browser-install-button-icon,
+    .browser-install-success-arrow {
+      flex: 0 0 auto;
+      width: 23px;
+      height: 23px;
+      display: block;
+    }
+
+    .browser-install-success-arrow {
+      animation:
+        browserInstallArrowFloat 1.25s
+        ease-in-out infinite;
+    }
+
+    .browser-install-wait {
+      margin: -4px 0 0;
+      color: #c9c9c4;
+      font-size: .94rem;
+      font-weight: 650;
+      text-align: center;
+    }
+
+    .browser-install-success-copy {
+      display: grid;
+      gap: 7px;
+      margin-top: -2px;
+      text-align: center;
+    }
+
+    .browser-install-success-copy[hidden],
+    .browser-install-wait[hidden] {
+      display: none !important;
+    }
+
+    .browser-install-instruction,
+    .browser-install-hint {
+      margin: 0;
+    }
+
+    .browser-install-instruction {
+      color: #ffe78e;
+      font-size: 1rem;
+      font-weight: 800;
+      line-height: 1.45;
+      animation:
+        browserInstallInstructionPulse 1.45s
+        ease-in-out infinite;
+    }
+
+    .browser-install-hint {
+      color: #aaa;
+      font-size: .83rem;
+      line-height: 1.45;
+    }
+
+    @keyframes browserInstallProgressFill {
+      0% {
+        transform: scaleX(0);
+      }
+
+      68% {
+        transform: scaleX(.76);
+      }
+
+      100% {
+        transform: scaleX(.92);
+      }
+    }
+
+    @keyframes browserInstallArrowFloat {
+      0%, 100% {
+        transform: translateY(2px);
+      }
+
+      50% {
+        transform: translateY(-3px);
+      }
+    }
+
+    @keyframes browserInstallInstructionPulse {
+      0%, 100% {
+        opacity: .68;
+        text-shadow: 0 0 0 rgba(255,226,119,0);
+      }
+
+      50% {
+        opacity: 1;
+        text-shadow: 0 0 17px rgba(255,226,119,.38);
+      }
     }
 
     .browser-install-link {
@@ -2616,7 +2777,7 @@ Content revision v34.16.0:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.16.0
+       Offline table game — v34.16.1
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -3222,8 +3383,15 @@ Content revision v34.16.0:
       .table-reveal-card.is-winner::after,
       .table-reveal-card.is-celebrating,
       .table-reveal-scroll-cue svg,
-      .table-winner-title:not([hidden]) {
+      .table-winner-title:not([hidden]),
+      .browser-install-button.is-installing .browser-install-progress,
+      .browser-install-success-arrow,
+      .browser-install-instruction {
         animation: none !important;
+      }
+
+      .browser-install-button.is-installing .browser-install-progress {
+        transform: scaleX(.92);
       }
     }
 
@@ -4393,8 +4561,73 @@ Content revision v34.16.0:
           type="button"
           disabled
         >
-          <span id="browserInstallButtonLabel">מכין התקנה…</span>
+          <span
+            id="browserInstallProgress"
+            class="browser-install-progress"
+            aria-hidden="true"
+          ></span>
+
+          <span class="browser-install-button-content">
+            <svg
+              id="browserInstallIcon"
+              class="browser-install-button-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path
+                d="M12 3v11m0 0 4-4m-4 4-4-4M5 16v3h14v-3"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+
+            <svg
+              id="browserInstallSuccessArrow"
+              class="browser-install-success-arrow"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+              hidden
+            >
+              <path
+                d="M12 20V5m0 0-5 5m5-5 5 5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.35"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+
+            <span id="browserInstallButtonLabel">מכין התקנה…</span>
+          </span>
         </button>
+
+        <p
+          id="browserInstallWait"
+          class="browser-install-wait"
+          aria-live="polite"
+          hidden
+        >
+          אנא המתן…
+        </p>
+
+        <div
+          id="browserInstallSuccessCopy"
+          class="browser-install-success-copy"
+          hidden
+        >
+          <p id="browserInstallInstruction" class="browser-install-instruction">
+            הקש על ההתראה בחלק העליון של המסך כדי לפתוח את המשחק.
+          </p>
+          <p id="browserInstallHint" class="browser-install-hint">
+            לא רואים התראה? האפליקציה נוספה גם למסך הבית.
+          </p>
+        </div>
 
         <button
           id="browserContinueButton"
@@ -5070,7 +5303,7 @@ Content revision v34.16.0:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.16.0 · 1,183 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.16.1 · 1,183 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5194,7 +5427,7 @@ Content revision v34.16.0:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.16.0</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.16.1</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -8173,6 +8406,20 @@ Content revision v34.16.0:
     const browserInstallButton = document.getElementById("browserInstallButton");
     const browserInstallButtonLabel =
       document.getElementById("browserInstallButtonLabel");
+    const browserInstallProgress =
+      document.getElementById("browserInstallProgress");
+    const browserInstallIcon =
+      document.getElementById("browserInstallIcon");
+    const browserInstallSuccessArrow =
+      document.getElementById("browserInstallSuccessArrow");
+    const browserInstallWait =
+      document.getElementById("browserInstallWait");
+    const browserInstallSuccessCopy =
+      document.getElementById("browserInstallSuccessCopy");
+    const browserInstallInstruction =
+      document.getElementById("browserInstallInstruction");
+    const browserInstallHint =
+      document.getElementById("browserInstallHint");
     const browserContinueButton =
       document.getElementById("browserContinueButton");
     const browserInstallFeedback =
@@ -8222,6 +8469,11 @@ Content revision v34.16.0:
     let deferredInstallPrompt = null;
     let browserInstallPromptTimedOut = false;
     let browserInstallFeedbackTimer = null;
+    let browserInstallPhase = "idle";
+    let browserInstallStartedAt = 0;
+    let browserInstallCompletionTimer = null;
+    let browserInstallContinueTimer = null;
+    const MIN_BROWSER_INSTALL_PROGRESS_MS = 5000;
     const BROWSER_INSTALL_SKIP_KEY =
       "cah-browser-install-skip-v1";
 
@@ -8648,6 +8900,118 @@ Content revision v34.16.0:
       );
     }
 
+    function browserInstallGateIsVisible() {
+      return Boolean(
+        browserInstallGate &&
+        !browserInstallGate.hidden
+      );
+    }
+
+    function clearBrowserInstallTimers() {
+      clearTimeout(browserInstallCompletionTimer);
+      clearTimeout(browserInstallContinueTimer);
+      browserInstallCompletionTimer = null;
+      browserInstallContinueTimer = null;
+    }
+
+    function resetBrowserInstallLanding(message = "") {
+      clearBrowserInstallTimers();
+      browserInstallPhase = "idle";
+      browserInstallStartedAt = 0;
+
+      browserInstallButton.classList.remove(
+        "is-installing",
+        "is-complete"
+      );
+      browserInstallButton.removeAttribute("aria-busy");
+      browserInstallIcon.hidden = false;
+      browserInstallSuccessArrow.hidden = true;
+      browserInstallWait.hidden = true;
+      browserInstallSuccessCopy.hidden = true;
+      browserContinueButton.hidden = false;
+      browserContinueButton.textContent =
+        "המשך לגרסת האתר";
+      browserInstallFeedback.textContent = message;
+
+      if (message) {
+        clearTimeout(browserInstallFeedbackTimer);
+        browserInstallFeedbackTimer = setTimeout(() => {
+          browserInstallFeedback.textContent = "";
+        }, 2200);
+      }
+
+      updateInstallAppUi();
+    }
+
+    function startBrowserInstallProgress() {
+      if (!browserInstallGateIsVisible()) {
+        return;
+      }
+
+      clearBrowserInstallTimers();
+      clearTimeout(browserInstallFeedbackTimer);
+      browserInstallPhase = "installing";
+      browserInstallStartedAt = Date.now();
+      browserInstallFeedback.textContent = "";
+      browserInstallButton.classList.remove("is-complete");
+      browserInstallButton.classList.add("is-installing");
+      browserInstallButton.setAttribute("aria-busy", "true");
+      browserInstallButton.disabled = true;
+      browserInstallButtonLabel.textContent = "מתקין…";
+      browserInstallIcon.hidden = true;
+      browserInstallSuccessArrow.hidden = true;
+      browserInstallWait.hidden = false;
+      browserInstallSuccessCopy.hidden = true;
+      browserContinueButton.hidden = true;
+    }
+
+    function completeBrowserInstallation() {
+      if (browserInstallPhase !== "installing") {
+        return;
+      }
+
+      browserInstallPhase = "complete";
+      browserInstallButton.classList.remove("is-installing");
+      browserInstallButton.classList.add("is-complete");
+      browserInstallButton.removeAttribute("aria-busy");
+      browserInstallButton.disabled = true;
+      browserInstallButtonLabel.textContent =
+        "ההתקנה הושלמה";
+      browserInstallIcon.hidden = true;
+      browserInstallSuccessArrow.hidden = false;
+      browserInstallWait.hidden = true;
+      browserInstallSuccessCopy.hidden = false;
+      browserInstallFeedback.textContent = "";
+      haptic(26);
+
+      browserInstallContinueTimer = setTimeout(() => {
+        browserContinueButton.textContent =
+          "המשך באתר בכל זאת";
+        browserContinueButton.hidden = false;
+      }, 10000);
+    }
+
+    function scheduleBrowserInstallCompletion() {
+      if (browserInstallPhase !== "installing") {
+        return;
+      }
+
+      const elapsed = Math.max(
+        0,
+        Date.now() - browserInstallStartedAt
+      );
+      const remaining = Math.max(
+        0,
+        MIN_BROWSER_INSTALL_PROGRESS_MS - elapsed
+      );
+
+      clearTimeout(browserInstallCompletionTimer);
+      browserInstallCompletionTimer = setTimeout(
+        completeBrowserInstallation,
+        remaining
+      );
+    }
+
     function updateInstallAppUi() {
       const installed = isInstalledPwa();
       const available = Boolean(deferredInstallPrompt);
@@ -8661,16 +9025,23 @@ Content revision v34.16.0:
       }
 
       if (browserInstallButton) {
-        browserInstallButton.hidden = installed;
-        browserInstallButton.disabled =
-          installed || !available;
-        browserInstallButtonLabel.textContent = installed
-          ? "מותקן"
-          : available
-            ? "התקנה"
-            : browserInstallPromptTimedOut
-              ? "התקנה לא זמינה"
-              : "מכין התקנה…";
+        if (browserInstallPhase === "idle") {
+          browserInstallButton.hidden = installed;
+          browserInstallButton.disabled =
+            installed || !available;
+          browserInstallButtonLabel.textContent = installed
+            ? "מותקן"
+            : available
+              ? "התקנה"
+              : browserInstallPromptTimedOut
+                ? "התקנה לא זמינה"
+                : "מכין התקנה…";
+          browserInstallIcon.hidden = false;
+          browserInstallSuccessArrow.hidden = true;
+        } else {
+          browserInstallButton.hidden = false;
+          browserInstallButton.disabled = true;
+        }
       }
 
       if (tableSettingsInstallButton) {
@@ -8729,16 +9100,18 @@ Content revision v34.16.0:
         return;
       }
 
+      const startedFromLanding =
+        browserInstallGateIsVisible();
       const promptEvent = deferredInstallPrompt;
       deferredInstallPrompt = null;
       setInstallButtonsDisabled(true);
 
-      if (installAppState) {
-        installAppState.textContent = "פותח התקנה";
+      if (startedFromLanding) {
+        startBrowserInstallProgress();
       }
 
-      if (browserInstallButtonLabel) {
-        browserInstallButtonLabel.textContent = "פותח התקנה…";
+      if (installAppState) {
+        installAppState.textContent = "פותח התקנה";
       }
 
       try {
@@ -8752,17 +9125,38 @@ Content revision v34.16.0:
             closeTableSettings();
           }
 
-          showInstallFeedback("המשחק נוסף למסך הבית", 2600);
-
-          if (browserInstallGate && !browserInstallGate.hidden) {
-            continueToContentWarning();
+          if (!startedFromLanding) {
+            showInstallFeedback(
+              "ההתקנה אושרה",
+              2200
+            );
           }
+        } else if (startedFromLanding) {
+          resetBrowserInstallLanding(
+            "ההתקנה בוטלה"
+          );
         } else {
-          showInstallFeedback("ההתקנה בוטלה", 1800);
+          showInstallFeedback(
+            "ההתקנה בוטלה",
+            1800
+          );
         }
       } catch (error) {
-        console.warn("PWA install prompt failed", error);
-        showInstallFeedback("ההתקנה אינה זמינה כרגע", 2200);
+        console.warn(
+          "PWA install prompt failed",
+          error
+        );
+
+        if (startedFromLanding) {
+          resetBrowserInstallLanding(
+            "לא הצלחנו להשלים את ההתקנה. אפשר לנסות שוב."
+          );
+        } else {
+          showInstallFeedback(
+            "ההתקנה אינה זמינה כרגע",
+            2200
+          );
+        }
       } finally {
         setInstallButtonsDisabled(false);
         updateInstallAppUi();
@@ -8786,12 +9180,20 @@ Content revision v34.16.0:
 
     window.addEventListener("appinstalled", () => {
       deferredInstallPrompt = null;
-      updateInstallAppUi();
-      setStatus("המשחק הותקן בהצלחה", 2600);
 
-      if (browserInstallGate && !browserInstallGate.hidden) {
-        continueToContentWarning();
+      if (
+        browserInstallGateIsVisible() &&
+        browserInstallPhase === "installing"
+      ) {
+        scheduleBrowserInstallCompletion();
+        return;
       }
+
+      updateInstallAppUi();
+      setStatus(
+        "המשחק הותקן בהצלחה",
+        2600
+      );
     });
 
     const standaloneMediaQuery =
@@ -9273,7 +9675,10 @@ Content revision v34.16.0:
       showBrowserInstallGate();
 
       setTimeout(() => {
-        if (!deferredInstallPrompt) {
+        if (
+          !deferredInstallPrompt &&
+          browserInstallPhase === "idle"
+        ) {
           browserInstallPromptTimedOut = true;
           updateInstallAppUi();
           browserInstallFeedback.textContent =
@@ -11127,7 +11532,7 @@ Content revision v34.16.0:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.16.0 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.16.1 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
