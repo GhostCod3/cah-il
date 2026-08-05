@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.13.7:
-- Shows the “Mode” button only on the role-selection screen
-- Keeps “Change role” in player mode
-- Adds “Change role” to the czar toolbar and routes it to role selection
-- Keeps “Finished as czar” routing directly back to player mode
-- Preserves all v34.13.6 update-banner, scoring, fullscreen and navigation behavior
+Content revision v34.14.0:
+- Adds a browser-only installation landing screen before the content warning
+- Lets visitors install the PWA or continue directly to the website version
+- Skips the installation landing screen in an installed standalone PWA
+- Keeps the browser skip choice for the current tab session
+- Moves the edition title above the 18+ symbol on the content-warning screen
+- Removes the floating install shortcut from the table role-selection screen
+- Keeps installation actions in the regular and table settings menus
+- Preserves all v34.13.11 table-mode, scoring, fullscreen, editor and PWA update behavior
 - Internal deck content version remains 33.8
 -->
 
@@ -27,8 +30,8 @@ Content revision v34.13.7:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.13.7" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.13.7" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.14.0" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.14.0" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -38,7 +41,7 @@ Content revision v34.13.7:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,040 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.13.7" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.14.0" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -1746,7 +1749,7 @@ Content revision v34.13.7:
       color: #777;
     }
 
-    .list-copy-button {
+    .list-editor-button {
       min-height: 44px;
       padding: 0 14px;
       background: #2a2a2a;
@@ -1811,7 +1814,7 @@ Content revision v34.13.7:
         grid-template-columns: 1fr;
       }
 
-      .list-copy-button {
+      .list-editor-button {
         width: 100%;
       }
     }
@@ -2291,15 +2294,90 @@ Content revision v34.13.7:
     }
 
     .content-gate-brand {
-      width: min(100%, 430px);
-      margin: 0 auto 12px;
+      width: min(100%, 440px);
+      margin: 0 auto 22px;
       color: #f5f5f1;
-      font-size: clamp(.76rem, 2.65vw, 1rem);
-      font-weight: 700;
-      line-height: 1.25;
-      letter-spacing: -.02em;
-      white-space: nowrap;
+      font-size: clamp(1.08rem, 4.4vw, 1.5rem);
+      font-weight: 850;
+      line-height: 1.22;
+      letter-spacing: -.035em;
+      white-space: normal;
+      text-wrap: balance;
       text-transform: none;
+    }
+
+    .browser-install-gate {
+      z-index: 5100;
+    }
+
+    .browser-install-card {
+      width: min(100%, 520px);
+      padding-block: clamp(34px, 8vw, 54px);
+    }
+
+    .browser-install-title {
+      width: min(100%, 455px);
+      margin: 0 auto;
+      color: #fff;
+      font-size: clamp(2rem, 8.2vw, 3.35rem);
+      font-weight: 900;
+      line-height: 1.04;
+      letter-spacing: -.055em;
+      text-wrap: balance;
+    }
+
+    .browser-install-actions {
+      display: grid;
+      gap: 16px;
+      width: min(100%, 350px);
+      margin: clamp(34px, 8vw, 48px) auto 0;
+    }
+
+    .browser-install-button {
+      min-height: 58px;
+      font-size: 1.08rem;
+      font-weight: 850;
+    }
+
+    .browser-install-button:disabled {
+      cursor: wait;
+      opacity: .72;
+    }
+
+    .browser-install-link {
+      justify-self: center;
+      min-height: 38px;
+      padding: 5px 10px;
+      border: 0;
+      background: transparent;
+      color: #d6d6d2;
+      font: inherit;
+      font-size: .98rem;
+      font-weight: 650;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 5px;
+      cursor: pointer;
+    }
+
+    .browser-install-link:hover {
+      color: #fff;
+    }
+
+    .browser-install-link:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 4px;
+      border-radius: 8px;
+    }
+
+    .browser-install-feedback {
+      min-height: 2.8em;
+      margin: 18px auto 0;
+      max-width: 390px;
+      color: #aaa;
+      font-size: .86rem;
+      line-height: 1.45;
+      text-align: center;
     }
 
     .content-gate h2 {
@@ -2534,7 +2612,7 @@ Content revision v34.13.7:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.13.7
+       Offline table game — v34.14.0
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -2848,8 +2926,7 @@ Content revision v34.13.7:
       gap: 8px;
     }
 
-    .table-overlay-fullscreen[hidden],
-    .table-install-floating[hidden] {
+    .table-overlay-fullscreen[hidden] {
       display: none !important;
     }
 
@@ -2866,54 +2943,6 @@ Content revision v34.13.7:
     #tableFullscreenButton {
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
-    }
-
-    .table-install-floating {
-      position: fixed;
-      left: max(18px, env(safe-area-inset-left));
-      bottom: calc(78px + env(safe-area-inset-bottom));
-      z-index: 53;
-      min-height: 46px;
-      padding: 0 14px;
-      border: 1px solid #3a3a3a;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: rgba(31,31,31,.96);
-      color: #fff;
-      font-size: .82rem;
-      font-weight: 750;
-      white-space: nowrap;
-      box-shadow: 0 12px 34px rgba(0,0,0,.4);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      transition: transform .14s ease, background .16s ease, border-color .16s ease, opacity .16s ease;
-    }
-
-    .table-install-floating svg {
-      width: 20px;
-      height: 20px;
-      display: block;
-      pointer-events: none;
-    }
-
-    .table-install-floating:hover {
-      background: #292929;
-      border-color: #505050;
-    }
-
-    .table-install-floating:active { transform: scale(.96); }
-
-    .table-install-floating:focus-visible {
-      outline: 3px solid rgba(255,255,255,.88);
-      outline-offset: 3px;
-    }
-
-    .table-install-floating:disabled {
-      cursor: wait;
-      opacity: .55;
     }
 
     .table-overlay-fullscreen .table-overlay-fullscreen-label {
@@ -3719,29 +3748,48 @@ Content revision v34.13.7:
     }
 
     .table-selection-order {
-      position: static;
-      align-self: flex-start;
-      flex: 0 0 auto;
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 8;
       display: grid;
       place-items: center;
       width: 38px;
       height: 38px;
-      margin-bottom: 14px;
       border-radius: 50%;
       background: #111;
       color: #fff;
       font-size: 1rem;
       font-weight: 800;
-      box-shadow: 0 8px 20px rgba(0,0,0,.24);
+      box-shadow:
+        0 0 0 3px rgba(247,247,243,.92),
+        0 9px 24px rgba(0,0,0,.32);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(.82);
+      transform-origin: center;
+      transition:
+        opacity .18s ease,
+        transform .18s cubic-bezier(.2,.8,.2,1),
+        visibility 0s linear .18s;
+    }
+
+    .table-selection-order.is-visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1);
+      transition-delay: 0s;
     }
 
     .table-selection-order.is-popping {
-      animation: tableSelectPop .2s cubic-bezier(.2,.8,.2,1) both;
+      animation: tableSelectPop .22s cubic-bezier(.2,.8,.2,1) both;
     }
 
     @keyframes tableSelectPop {
-      from { transform: scale(.75); opacity: .6; }
-      to { transform: scale(1); opacity: 1; }
+      0% { opacity: .35; transform: translate(-50%, -50%) scale(.68); }
+      68% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     }
 
     .table-hand-counter {
@@ -3992,6 +4040,12 @@ Content revision v34.13.7:
       grid-template-columns: minmax(0, 520px);
     }
 
+    .table-reveal-card-shell {
+      position: relative;
+      width: 100%;
+      overflow: visible;
+    }
+
     .table-reveal-card {
       min-height: min(55dvh, 590px);
       aspect-ratio: auto;
@@ -4018,19 +4072,23 @@ Content revision v34.13.7:
     @keyframes tableWinnerSweep { 0%,58%{transform:translateX(-62%) rotate(18deg)} 82%,100%{transform:translateX(62%) rotate(18deg)} }
 
     .table-reveal-index {
-      position: static;
-      align-self: flex-start;
-      flex: 0 0 auto;
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 12;
       display: grid;
       place-items: center;
       width: 38px;
       height: 38px;
-      margin-bottom: 14px;
       border-radius: 50%;
       background: #111;
       color: #fff;
       font-weight: 800;
-      box-shadow: 0 8px 20px rgba(0,0,0,.2);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      box-shadow:
+        0 0 0 3px rgba(247,247,243,.96),
+        0 9px 24px rgba(0,0,0,.32);
     }
 
     .table-reveal-actions {
@@ -4167,14 +4225,6 @@ Content revision v34.13.7:
         font-size: .78rem;
       }
 
-      .table-install-floating {
-        bottom: calc(74px + env(safe-area-inset-bottom));
-        min-height: 44px;
-        padding: 0 12px;
-        gap: 7px;
-        font-size: .78rem;
-      }
-
       .table-player-header {
         gap: 9px;
         margin-bottom: 9px;
@@ -4251,11 +4301,18 @@ Content revision v34.13.7:
         font-size: clamp(1.5rem, 7.5vw, 2.2rem);
       }
 
-      .table-selection-order,
-      .table-reveal-index {
+      .table-selection-order {
+        top: 13px;
+        left: 13px;
         width: 36px;
         height: 36px;
-        margin-bottom: 12px;
+      }
+
+      .table-reveal-index {
+        top: 13px;
+        left: 13px;
+        width: 36px;
+        height: 36px;
       }
 
       .table-winner-toolbar { gap:7px; padding:7px 8px; }
@@ -4312,6 +4369,47 @@ Content revision v34.13.7:
 <body class="content-gate-open">
 
   <div
+    id="browserInstallGate"
+    class="content-gate browser-install-gate"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="browserInstallTitle"
+    aria-describedby="browserInstallFeedback"
+    hidden
+  >
+    <section class="content-gate-card browser-install-card">
+      <h1 id="browserInstallTitle" class="browser-install-title">
+        קלפים נגד האנושות: 2026 בלי ברקסים
+      </h1>
+
+      <div class="browser-install-actions">
+        <button
+          id="browserInstallButton"
+          class="content-gate-button primary browser-install-button"
+          type="button"
+          disabled
+        >
+          <span id="browserInstallButtonLabel">מכין התקנה…</span>
+        </button>
+
+        <button
+          id="browserContinueButton"
+          class="browser-install-link"
+          type="button"
+        >
+          המשך לגרסת האתר
+        </button>
+      </div>
+
+      <p
+        id="browserInstallFeedback"
+        class="browser-install-feedback"
+        aria-live="polite"
+      ></p>
+    </section>
+  </div>
+
+  <div
     id="contentGate"
     class="content-gate"
     role="dialog"
@@ -4320,10 +4418,10 @@ Content revision v34.13.7:
     aria-describedby="contentGateDescription"
   >
     <section id="contentGateWarning" class="content-gate-card">
-      <div class="content-gate-badge content-gate-age-symbol" aria-hidden="true">🔞</div>
       <p id="contentGateBrand" class="content-gate-brand">
         קלפים נגד האנושות: 2026 בלי ברקסים
       </p>
+      <div class="content-gate-badge content-gate-age-symbol" aria-hidden="true">🔞</div>
       <h2 id="contentGateTitle">אזהרת תוכן</h2>
 
       <p id="contentGateDescription" class="content-gate-copy">
@@ -4620,7 +4718,7 @@ Content revision v34.13.7:
               tabindex="0"
               aria-label="בחר את הקלף הנוכחי"
             >
-              <span id="tableSelectionOrder" class="table-selection-order" hidden></span>
+              <span id="tableSelectionOrder" class="table-selection-order" aria-hidden="true"></span>
               <div id="tablePlayerCardText" class="table-card-text"></div>
               <div class="brand">
                 <span class="brand-mark" aria-hidden="true"></span>
@@ -4722,22 +4820,6 @@ Content revision v34.13.7:
                 fill="none" stroke="currentColor" stroke-width="1.55"
                 stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-      </button>
-
-      <button
-        id="tableInstallButton"
-        class="table-install-floating"
-        type="button"
-        aria-label="התקנת המשחק במסך הבית"
-        title="התקנת המשחק"
-        hidden
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 16v3h14v-3"
-                fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>התקנה</span>
       </button>
 
       <button
@@ -4979,20 +5061,12 @@ Content revision v34.13.7:
             <span id="cardBrowserSummary" class="settings-action-count"></span>
           </button>
 
-          <button
-            id="deckEditorButton"
-            class="settings-action"
-            type="button"
-            data-close-settings="true"
-          >
-            ✎ עריכת חבילת הבסיס
-          </button>
         </section>
 
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.13.7 · 1,040 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.14.0 · 1,040 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5103,9 +5177,6 @@ Content revision v34.13.7:
             <span id="tableCardBrowserSummary" class="settings-action-count"></span>
           </button>
 
-          <button id="tableDeckEditorButton" class="settings-action" type="button">
-            ✎ עריכת חבילת הבסיס
-          </button>
         </section>
 
         <section class="settings-section" aria-labelledby="tableHelpMenuSection">
@@ -5119,7 +5190,7 @@ Content revision v34.13.7:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.13.7</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.14.0</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5150,7 +5221,7 @@ Content revision v34.13.7:
           <span class="sr-only">חיפוש ברשימת הקלפים</span>
           <input id="listSearch" type="search" inputmode="search" placeholder="חיפוש בתוך הקלפים…" autocomplete="off" />
         </label>
-        <button id="copyVisibleList" class="list-copy-button" type="button">העתק רשימה</button>
+        <button id="editDeckFromBrowser" class="list-editor-button" type="button">✎ עריכת חבילת הבסיס</button>
       </div>
 
       <ol id="listBrowserItems" class="list-browser-items"></ol>
@@ -5496,9 +5567,17 @@ Content revision v34.13.7:
 
       const contentGateBrand =
         document.getElementById("contentGateBrand");
+      const browserInstallTitle =
+        document.getElementById("browserInstallTitle");
+      const editionTitle =
+        `קלפים נגד האנושות: ${CURRENT_EDITION_YEAR} בלי ברקסים`;
+
       if (contentGateBrand) {
-        contentGateBrand.textContent =
-          `קלפים נגד האנושות: ${CURRENT_EDITION_YEAR} בלי ברקסים`;
+        contentGateBrand.textContent = editionTitle;
+      }
+
+      if (browserInstallTitle) {
+        browserInstallTitle.textContent = editionTitle;
       }
     }
 
@@ -7242,7 +7321,7 @@ Content revision v34.13.7:
     const listBrowserItems = document.getElementById("listBrowserItems");
     const listEmptyState = document.getElementById("listEmptyState");
     const listSearch = document.getElementById("listSearch");
-    const copyVisibleList = document.getElementById("copyVisibleList");
+    const editDeckFromBrowser = document.getElementById("editDeckFromBrowser");
     const blackListTab = document.getElementById("blackListTab");
     const whiteListTab = document.getElementById("whiteListTab");
 
@@ -7251,7 +7330,14 @@ Content revision v34.13.7:
     const wakeLockDescription = document.getElementById("wakeLockDescription");
     const installAppButton = document.getElementById("installAppButton");
     const installAppState = document.getElementById("installAppState");
-    const tableInstallButton = document.getElementById("tableInstallButton");
+    const browserInstallGate = document.getElementById("browserInstallGate");
+    const browserInstallButton = document.getElementById("browserInstallButton");
+    const browserInstallButtonLabel =
+      document.getElementById("browserInstallButtonLabel");
+    const browserContinueButton =
+      document.getElementById("browserContinueButton");
+    const browserInstallFeedback =
+      document.getElementById("browserInstallFeedback");
     const tableSettingsButton = document.getElementById("tableSettingsButton");
     const tableSettingsOverlay = document.getElementById("tableSettingsOverlay");
     const tableSettingsClose = document.getElementById("tableSettingsClose");
@@ -7281,12 +7367,12 @@ Content revision v34.13.7:
     const tableCancelDeckChanges = document.getElementById("tableCancelDeckChanges");
     const tableOpenCardBrowser = document.getElementById("tableOpenCardBrowser");
     const tableCardBrowserSummary = document.getElementById("tableCardBrowserSummary");
-    const tableDeckEditorButton = document.getElementById("tableDeckEditorButton");
     const tableSettingsFooterSummary = document.getElementById("tableSettingsFooterSummary");
 
     let currentListType = "black";
     let listBrowserDeckContext = "regular";
     let visibleListCards = [];
+    let deckEditorBrowserReturnState = null;
     let wakeLockSentinel = null;
     let wakeLockWanted = false;
     const appUpdateBanner = document.getElementById("appUpdateBanner");
@@ -7295,6 +7381,10 @@ Content revision v34.13.7:
 
     let contentWarningAccepted = false;
     let deferredInstallPrompt = null;
+    let browserInstallFallbackReady = false;
+    let browserInstallFeedbackTimer = null;
+    const BROWSER_INSTALL_SKIP_KEY =
+      "cah-browser-install-skip-v1";
 
     const modalReturnFocus = new WeakMap();
 
@@ -7658,66 +7748,64 @@ Content revision v34.13.7:
       listBrowserItems.hidden = visibleListCards.length === 0;
     }
 
-    function openListBrowser(type, context = "regular") {
-      listBrowserDeckContext = context === "table"
-        ? "table"
-        : "regular";
+    function openListBrowser(type, context = "regular", restoreState = null) {
+      listBrowserDeckContext = context === "table" ? "table" : "regular";
+      listSearch.value = typeof restoreState?.query === "string" ? restoreState.query : "";
       setListType(type);
-      listSearch.value = "";
-      renderListBrowser();
 
       rememberModalTrigger(listBrowserModal);
       listBrowserModal.hidden = false;
       listBrowserModal.classList.add("is-open");
       revealTableTopLayerModal(listBrowserModal);
       syncModalOpenState();
-      focusInsideModal(listBrowserModal, listSearch);
+
+      requestAnimationFrame(() => {
+        const restoredScrollTop = Number(restoreState?.scrollTop);
+        listBrowserItems.scrollTop = Number.isFinite(restoredScrollTop)
+          ? Math.max(0, restoredScrollTop)
+          : 0;
+        focusInsideModal(listBrowserModal, listSearch);
+      });
     }
 
-    function closeListBrowser() {
+    function closeListBrowser(options = null) {
+      const restoreFocus = options?.restoreFocus !== false;
       closeTableTopLayerModal(listBrowserModal);
       listBrowserModal.classList.remove("is-open");
       listBrowserModal.hidden = true;
       listSearch.value = "";
       listBrowserDeckContext = "regular";
       syncModalOpenState();
-      restoreModalTrigger(listBrowserModal);
+
+      if (restoreFocus) {
+        restoreModalTrigger(listBrowserModal);
+      } else {
+        modalReturnFocus.delete(listBrowserModal);
+      }
     }
 
-    async function copyTextWithFallback(text) {
-      try {
-        await navigator.clipboard.writeText(text);
-        return true;
-      } catch {
-        try {
-          const textarea = document.createElement("textarea");
-          textarea.value = text;
-          textarea.style.position = "fixed";
-          textarea.style.opacity = "0";
-          document.body.appendChild(textarea);
-          textarea.select();
-          const copied = document.execCommand("copy");
-          textarea.remove();
-          return copied;
-        } catch {
-          return false;
-        }
+    function openDeckEditorFromBrowser() {
+      const returnState = {
+        type: currentListType,
+        context: listBrowserDeckContext,
+        query: listSearch.value,
+        scrollTop: listBrowserItems.scrollTop
+      };
+
+      deckEditorBrowserReturnState = returnState;
+      closeListBrowser({ restoreFocus: false });
+
+      if (returnState.context === "table") {
+        prepareTableTopLayerModal(deckEditorModal);
       }
+
+      requestAnimationFrame(openEditor);
     }
 
     function isInstalledPwa() {
       return (
         window.matchMedia("(display-mode: standalone)").matches ||
         window.navigator.standalone === true
-      );
-    }
-
-    function tableInstallScreenIsVisible() {
-      const overlay = document.getElementById("tableAppOverlay");
-      const roleScreen = document.getElementById("tableRoleScreen");
-      return Boolean(
-        overlay && roleScreen && !overlay.hidden &&
-        overlay.classList.contains("is-open") && !roleScreen.hidden
       );
     }
 
@@ -7733,10 +7821,21 @@ Content revision v34.13.7:
           : available ? "למסך הבית" : "לא זמין";
       }
 
-      if (tableInstallButton) {
-        tableInstallButton.hidden =
-          installed || !available || !tableInstallScreenIsVisible();
-        tableInstallButton.disabled = !available;
+      if (browserInstallButton) {
+        const preparing =
+          !installed &&
+          !available &&
+          !browserInstallFallbackReady;
+
+        browserInstallButton.hidden = installed;
+        browserInstallButton.disabled = installed || preparing;
+        browserInstallButtonLabel.textContent = installed
+          ? "מותקן"
+          : available
+            ? "התקנה"
+            : preparing
+              ? "מכין התקנה…"
+              : "התקנה";
       }
 
       if (tableSettingsInstallButton) {
@@ -7749,14 +7848,36 @@ Content revision v34.13.7:
     }
 
     function setInstallButtonsDisabled(disabled) {
-      [installAppButton, tableInstallButton, tableSettingsInstallButton]
+      [
+        installAppButton,
+        browserInstallButton,
+        tableSettingsInstallButton
+      ]
         .filter(Boolean)
-        .forEach((button) => { button.disabled = disabled; });
+        .forEach((button) => {
+          button.disabled = disabled;
+        });
     }
 
-    function showInstallFeedback(message, duration) {
-      const tableOverlay = document.getElementById("tableAppOverlay");
-      if (tableOverlay && !tableOverlay.hidden && tableOverlay.classList.contains("is-open")) {
+    function showInstallFeedback(message, duration = 2600) {
+      if (browserInstallGate && !browserInstallGate.hidden) {
+        clearTimeout(browserInstallFeedbackTimer);
+        browserInstallFeedback.textContent = message;
+
+        browserInstallFeedbackTimer = setTimeout(() => {
+          browserInstallFeedback.textContent = "";
+        }, duration);
+        return;
+      }
+
+      const tableOverlay =
+        document.getElementById("tableAppOverlay");
+
+      if (
+        tableOverlay &&
+        !tableOverlay.hidden &&
+        tableOverlay.classList.contains("is-open")
+      ) {
         tableSetStatus(message, duration);
       } else {
         setStatus(message, duration);
@@ -7765,14 +7886,26 @@ Content revision v34.13.7:
 
     async function promptAppInstallation() {
       if (!deferredInstallPrompt) {
+        browserInstallFallbackReady = true;
         updateInstallAppUi();
+        showInstallFeedback(
+          "להתקנה, פתח את תפריט הדפדפן ובחר „התקנת האפליקציה” או „הוספה למסך הבית”.",
+          5600
+        );
         return;
       }
 
       const promptEvent = deferredInstallPrompt;
       deferredInstallPrompt = null;
       setInstallButtonsDisabled(true);
-      installAppState.textContent = "פותח התקנה";
+
+      if (installAppState) {
+        installAppState.textContent = "פותח התקנה";
+      }
+
+      if (browserInstallButtonLabel) {
+        browserInstallButtonLabel.textContent = "פותח התקנה…";
+      }
 
       try {
         await promptEvent.prompt();
@@ -7780,10 +7913,16 @@ Content revision v34.13.7:
 
         if (choice.outcome === "accepted") {
           closeSettings();
+
           if (typeof closeTableSettings === "function") {
             closeTableSettings();
           }
+
           showInstallFeedback("המשחק נוסף למסך הבית", 2600);
+
+          if (browserInstallGate && !browserInstallGate.hidden) {
+            continueToContentWarning();
+          }
         } else {
           showInstallFeedback("ההתקנה בוטלה", 1800);
         }
@@ -7806,6 +7945,10 @@ Content revision v34.13.7:
       deferredInstallPrompt = null;
       updateInstallAppUi();
       setStatus("המשחק הותקן בהצלחה", 2600);
+
+      if (browserInstallGate && !browserInstallGate.hidden) {
+        continueToContentWarning();
+      }
     });
 
     const standaloneMediaQuery =
@@ -8143,20 +8286,10 @@ Content revision v34.13.7:
     whiteListTab.addEventListener("click", () => setListType("white"));
     listSearch.addEventListener("input", renderListBrowser);
 
-    copyVisibleList.addEventListener("click", async () => {
-      const text = visibleListCards
-        .map(
-          (card, index) =>
-            `${index + 1}. ${renderEditionYear(card)}`
-        )
-        .join("\n\n");
-
-      const copied = await copyTextWithFallback(text);
-      setStatus(
-        copied ? "הרשימה הועתקה" : "ההעתקה אינה זמינה בדפדפן הזה",
-        2000
-      );
-    });
+    editDeckFromBrowser.addEventListener(
+      "click",
+      openDeckEditorFromBrowser
+    );
 
     async function toggleWakeLockPreference() {
       const support = wakeLockSupportStatus();
@@ -8188,7 +8321,7 @@ Content revision v34.13.7:
       promptAppInstallation
     );
 
-    tableInstallButton?.addEventListener(
+    browserInstallButton?.addEventListener(
       "click",
       promptAppInstallation
     );
@@ -8227,14 +8360,91 @@ Content revision v34.13.7:
 
     function setGameBackgroundInert(inert) {
       document
-        .querySelectorAll("body > :not(#contentGate):not(script)")
+        .querySelectorAll(
+          "body > :not(#browserInstallGate):not(#contentGate):not(script)"
+        )
         .forEach((element) => {
           element.inert = inert;
         });
     }
 
+    function browserInstallWasSkipped() {
+      try {
+        return (
+          sessionStorage.getItem(BROWSER_INSTALL_SKIP_KEY) === "1"
+        );
+      } catch {
+        return false;
+      }
+    }
+
+    function rememberBrowserInstallSkip() {
+      try {
+        sessionStorage.setItem(BROWSER_INSTALL_SKIP_KEY, "1");
+      } catch {
+        // Continue without persistence when session storage is blocked.
+      }
+    }
+
+    function showContentWarningGate() {
+      browserInstallGate.hidden = true;
+      contentGate.hidden = false;
+      document.body.classList.add("content-gate-open");
+      setGameBackgroundInert(true);
+
+      requestAnimationFrame(() => {
+        contentGateAccept.focus();
+      });
+    }
+
+    function showBrowserInstallGate() {
+      contentGate.hidden = true;
+      browserInstallGate.hidden = false;
+      document.body.classList.add("content-gate-open");
+      setGameBackgroundInert(true);
+      updateInstallAppUi();
+
+      requestAnimationFrame(() => {
+        const focusTarget =
+          browserInstallButton.disabled
+            ? browserContinueButton
+            : browserInstallButton;
+
+        focusTarget.focus();
+      });
+    }
+
+    function continueToContentWarning() {
+      rememberBrowserInstallSkip();
+      showContentWarningGate();
+    }
+
+    function initializeOpeningFlow() {
+      setGameBackgroundInert(true);
+
+      if (isInstalledPwa() || browserInstallWasSkipped()) {
+        showContentWarningGate();
+        return;
+      }
+
+      showBrowserInstallGate();
+
+      setTimeout(() => {
+        browserInstallFallbackReady = true;
+        updateInstallAppUi();
+
+        if (
+          !browserInstallGate.hidden &&
+          document.activeElement === browserContinueButton
+        ) {
+          browserInstallButton.focus();
+        }
+      }, 1600);
+    }
+
     function closeContentGate() {
       contentGate.hidden = true;
+      browserInstallGate.hidden = true;
       document.body.classList.remove("content-gate-open");
       setGameBackgroundInert(false);
     }
@@ -8462,11 +8672,15 @@ Content revision v34.13.7:
       });
     }
 
-    setGameBackgroundInert(true);
+    initializeOpeningFlow();
 
-    requestAnimationFrame(() => {
-      contentGateAccept.focus();
-    });
+    browserContinueButton.addEventListener(
+      "click",
+      () => {
+        haptic(10);
+        continueToContentWarning();
+      }
+    );
 
     contentGateAccept.addEventListener(
       "pointerup",
@@ -8500,7 +8714,6 @@ Content revision v34.13.7:
 
     let deckEditorDefaultsPending = false;
 
-    const deckEditorButton=document.getElementById("deckEditorButton");
     const deckEditorModal=document.getElementById("deckEditorModal");
     const deckEditorClose=document.getElementById("deckEditorClose");
     const blackEditor=document.getElementById("blackEditor"),whiteEditor=document.getElementById("whiteEditor");
@@ -8699,10 +8912,28 @@ Content revision v34.13.7:
     }
 
     function closeEditor() {
+      const browserReturnState = deckEditorBrowserReturnState;
+      deckEditorBrowserReturnState = null;
       closeTableTopLayerModal(deckEditorModal);
       deckEditorModal.classList.remove("is-open");
       deckEditorModal.hidden = true;
       syncModalOpenState();
+
+      if (browserReturnState) {
+        modalReturnFocus.delete(deckEditorModal);
+        requestAnimationFrame(() => {
+          if (browserReturnState.context === "table") {
+            prepareTableTopLayerModal(listBrowserModal);
+          }
+          openListBrowser(
+            browserReturnState.type,
+            browserReturnState.context,
+            browserReturnState
+          );
+        });
+        return;
+      }
+
       restoreModalTrigger(deckEditorModal);
     }
     function lines(v){return v.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);}
@@ -8738,7 +8969,10 @@ Content revision v34.13.7:
       });
       return true;
     }
-    deckEditorButton.addEventListener("click",openEditor);deckEditorClose.addEventListener("click",closeEditor);deckEditorModal.addEventListener("click",e=>{if(e.target===deckEditorModal)closeEditor();});
+    deckEditorClose.addEventListener("click", closeEditor);
+    deckEditorModal.addEventListener("click", (event) => {
+      if (event.target === deckEditorModal) closeEditor();
+    });
     saveDeckButton.addEventListener("click",()=>{
       if(
         applyDecks(
@@ -10053,7 +10287,7 @@ Content revision v34.13.7:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.13.7 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.14.0 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
@@ -10726,7 +10960,8 @@ Content revision v34.13.7:
 
       tablePlayerCardText.textContent = card?.text || "אין קלפים זמינים";
       tablePlayerCard.classList.toggle("is-selected", order >= 0);
-      tableSelectionOrder.hidden = order < 0;
+      tableSelectionOrder.classList.toggle("is-visible", order >= 0);
+      tableSelectionOrder.setAttribute("aria-hidden", String(order < 0));
       tableSelectionOrder.textContent = order >= 0 ? String(order + 1) : "";
       tableHandDots.replaceChildren();
       hand.forEach((handCard, index) => {
@@ -10792,14 +11027,21 @@ Content revision v34.13.7:
       tableRevealCards.classList.toggle("is-double", cards.length === 2);
 
       cards.forEach((card, index) => {
+        const shell = document.createElement("div");
+        shell.className = "table-reveal-card-shell";
+
         const article = document.createElement("article");
         article.className = "table-card table-reveal-card white";
         article.classList.toggle("is-winner", isWinner);
-        article.classList.toggle("is-celebrating", isWinner && tableWinnerCelebrationPending);
+        article.classList.toggle(
+          "is-celebrating",
+          isWinner && tableWinnerCelebrationPending
+        );
 
         const badge = document.createElement("span");
         badge.className = "table-reveal-index";
         badge.textContent = String(index + 1);
+        badge.setAttribute("aria-hidden", "true");
 
         const text = document.createElement("div");
         text.className = "table-card-text";
@@ -10811,8 +11053,9 @@ Content revision v34.13.7:
           '<span class="brand-mark" aria-hidden="true"></span>' +
           '<span>קלפים נגד האנושות</span>';
 
-        article.append(badge, text, brand);
-        tableRevealCards.append(article);
+        article.append(text, brand);
+        shell.append(article, badge);
+        tableRevealCards.append(shell);
 
         if (index === 0) {
           tableRevealCards.append(tableRevealActions);
@@ -11124,12 +11367,6 @@ Content revision v34.13.7:
       closeTableSettings();
       prepareTableTopLayerModal(listBrowserModal);
       openListBrowser(currentListType, "table");
-    });
-
-    tableDeckEditorButton.addEventListener("click", () => {
-      closeTableSettings();
-      prepareTableTopLayerModal(deckEditorModal);
-      openEditor();
     });
 
     modeRegularButton.addEventListener("click", activateRegularMode);
