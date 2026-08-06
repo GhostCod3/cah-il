@@ -1,14 +1,9 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.16.1:
-- Adds an install icon to the browser landing-page install button
-- Keeps the browser landing screen visible while Android installs the PWA
-- Replaces the install button with a five-second right-to-left progress meter
-- Waits for the real appinstalled event before showing installation success
-- Shows an animated upward-arrow instruction for opening the installed app
-- Restores the install action and website link when installation is cancelled or fails
-- Offers “Continue on the website anyway” ten seconds after successful installation
-- Preserves all v34.16.0 deck, table-mode, scoring, fullscreen, editor and update behavior
+Content revision v34.16.2:
+- Compact expansion pack controls with short names and switches
+- Moves aggregate actions above the pack list
+- Keeps all 1,183 cards and stored selections unchanged
 - Internal deck content version remains 34.16
 -->
 
@@ -30,8 +25,8 @@ Content revision v34.16.1:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,183 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.1" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.1" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.2" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.2" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -41,7 +36,7 @@ Content revision v34.16.1:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,183 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.1" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.2" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -1567,85 +1562,23 @@ Content revision v34.16.1:
       white-space: nowrap;
     }
 
-    .expansion-pack-list {
-      display: grid;
-      gap: 8px;
-    }
-
-    .expansion-pack {
-      width: 100%;
-      padding: 13px 14px;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 14px;
-      text-align: right;
-      background: #242424;
-      color: #fff;
-      border: 1px solid #3a3a3a;
-      border-radius: 14px;
-    }
-
-    .expansion-pack-copy {
-      min-width: 0;
-      display: grid;
-      gap: 3px;
-    }
-
-    .expansion-pack-name {
-      font-weight: 700;
-      line-height: 1.25;
-    }
-
-    .expansion-pack-meta {
-      color: #aaa;
-      font-size: .76rem;
-      font-weight: 400;
-      line-height: 1.35;
-    }
-
-    .expansion-pack-state {
-      min-width: 72px;
-      padding: 6px 9px;
-      border-radius: 999px;
-      background: #373737;
-      color: #ccc;
-      text-align: center;
-      font-size: .76rem;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .expansion-pack[aria-checked="true"] .expansion-pack-state {
-      background: #f5f5f1;
-      color: #111;
-    }
-
-    .expansion-pack[aria-disabled="true"] {
-      cursor: default;
-      opacity: .58;
-    }
-
-    .expansion-summary {
-      margin: 2px 4px 0;
-      color: #bdbdbd;
-      font-size: .78rem;
-      line-height: 1.45;
-    }
-
-    .expansion-quick-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .expansion-quick-button {
-      padding: 10px 12px;
-      background: #202020;
-      color: #e6e6e6;
-      border: 1px solid #383838;
-      font-size: .82rem;
-    }
+    .expansion-pack-list { display: grid; gap: 7px; }
+    .expansion-pack { width: 100%; min-height: 68px; padding: 10px 12px; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px; text-align: right; background: #242424; color: #fff; border: 1px solid #3a3a3a; border-radius: 14px; }
+    .expansion-pack-copy { min-width: 0; display: grid; gap: 3px; }
+    .expansion-pack-name { overflow: hidden; color: #f5f5f1; font-size: .94rem; font-weight: 760; line-height: 1.22; text-overflow: ellipsis; white-space: nowrap; }
+    .expansion-pack-meta { overflow: hidden; color: #a9a9a9; font-size: .74rem; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+    .expansion-pack-state { position: relative; width: 48px; height: 28px; border: 1px solid #4b4b4b; border-radius: 999px; background: #343434; box-shadow: inset 0 1px 2px rgba(0,0,0,.28); transition: background .18s ease,border-color .18s ease; }
+    .expansion-pack-state::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #aaa; box-shadow: 0 2px 7px rgba(0,0,0,.4); transition: transform .2s cubic-bezier(.2,.8,.2,1),background .18s ease; }
+    .expansion-pack[aria-checked="true"] .expansion-pack-state { border-color: #f5f5f1; background: #f5f5f1; }
+    .expansion-pack[aria-checked="true"] .expansion-pack-state::after { background: #111; transform: translateX(20px); }
+    .expansion-pack:focus-visible { outline: 3px solid rgba(255,255,255,.88); outline-offset: 3px; }
+    .expansion-pack:active:not([aria-disabled="true"]) { transform: scale(.992); }
+    .expansion-pack[aria-disabled="true"] { cursor: default; }
+    .expansion-pack-base-state { min-width: 82px; padding: 6px 9px; border: 1px solid #484848; border-radius: 999px; background: #303030; color: #d2d2ce; font-size: .7rem; font-weight: 700; text-align: center; white-space: nowrap; }
+    .expansion-summary { margin: 4px 4px 0; color: #bdbdbd; font-size: .76rem; line-height: 1.4; text-align: center; }
+    .expansion-quick-actions { position: sticky; top: 0; z-index: 4; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 0 9px; background: linear-gradient(to bottom,#171717 0%,#171717 76%,rgba(23,23,23,0) 100%); }
+    .expansion-quick-button { min-height: 44px; padding: 9px 10px; background: #202020; color: #e6e6e6; border: 1px solid #383838; font-size: .82rem; }
+    .expansion-quick-button[aria-pressed="true"] { border-color: #f5f5f1; background: #f5f5f1; color: #111; box-shadow: 0 7px 20px rgba(0,0,0,.24); }
 
     .list-browser-modal {
       position: fixed;
@@ -2777,7 +2710,7 @@ Content revision v34.16.1:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.16.1
+       Offline table game — v34.16.2
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -5257,34 +5190,11 @@ Content revision v34.16.1:
           </button>
 
           <div id="expansionPanel" class="settings-subpanel" hidden>
-            <div
-              id="expansionPackList"
-              class="expansion-pack-list"
-              aria-label="בחירת חבילות הרחבה"
-            ></div>
-
-            <div
-              id="expansionQuickActions"
-              class="expansion-quick-actions"
-              hidden
-            >
-              <button
-                id="baseOnlyPacks"
-                class="expansion-quick-button"
-                type="button"
-              >
-                רק חבילת הבסיס
-              </button>
-
-              <button
-                id="allPacks"
-                class="expansion-quick-button"
-                type="button"
-              >
-                הפעלת כל ההרחבות
-              </button>
+            <div id="expansionQuickActions" class="expansion-quick-actions" hidden>
+              <button id="baseOnlyPacks" class="expansion-quick-button" type="button" aria-pressed="false">רק חבילת הבסיס</button>
+              <button id="allPacks" class="expansion-quick-button" type="button" aria-pressed="false">הפעלת כל ההרחבות</button>
             </div>
-
+            <div id="expansionPackList" class="expansion-pack-list" aria-label="בחירת חבילות הרחבה"></div>
             <p id="expansionSummary" class="expansion-summary"></p>
           </div>
 
@@ -5303,7 +5213,7 @@ Content revision v34.16.1:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.16.1 · 1,183 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.16.2 · 1,183 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5377,21 +5287,11 @@ Content revision v34.16.1:
           </button>
 
           <div id="tableExpansionPanel" class="settings-subpanel" hidden>
-            <div
-              id="tableExpansionPackList"
-              class="expansion-pack-list"
-              aria-label="בחירת חבילות למצב שולחן"
-            ></div>
-
             <div id="tableExpansionQuickActions" class="expansion-quick-actions">
-              <button id="tableBaseOnlyPacks" class="expansion-quick-button" type="button">
-                רק חבילת הבסיס
-              </button>
-              <button id="tableAllPacks" class="expansion-quick-button" type="button">
-                הפעלת כל ההרחבות
-              </button>
+              <button id="tableBaseOnlyPacks" class="expansion-quick-button" type="button" aria-pressed="false">רק חבילת הבסיס</button>
+              <button id="tableAllPacks" class="expansion-quick-button" type="button" aria-pressed="false">הפעלת כל ההרחבות</button>
             </div>
-
+            <div id="tableExpansionPackList" class="expansion-pack-list" aria-label="בחירת חבילות למצב שולחן"></div>
             <p id="tableExpansionSummary" class="expansion-summary"></p>
 
             <div id="tableDeckChangeNotice" class="table-deck-change-notice" hidden>
@@ -5427,7 +5327,7 @@ Content revision v34.16.1:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.16.1</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.16.2</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5876,7 +5776,7 @@ Content revision v34.16.1:
     const EXPANSION_PACKS = [
       {
             "id": "culture",
-            "name": "תרבות, קולנוע וגיימינג",
+            "name": "זבל פופולרי",
             "description": "סטרימינג, סרטים, מוזיקה, משחקים ומשפיענים",
             "plannedBlackCount": 53,
             "plannedWhiteCount": 108,
@@ -6048,7 +5948,7 @@ Content revision v34.16.1:
       },
       {
             "id": "childhood",
-            "name": "ילדות, בית ספר ונוסטלגיה",
+            "name": "ילדות שרוטה",
             "description": "טקסים, קייטנות, מורים, צעצועים וטראומות חינוכיות",
             "plannedBlackCount": 25,
             "plannedWhiteCount": 64,
@@ -6148,7 +6048,7 @@ Content revision v34.16.1:
       },
       {
             "id": "science",
-            "name": "מדע, טבע ודברים לא תקינים",
+            "name": "ניסוי כושל",
             "description": "חלל, אבולוציה, חיות מוזרות וניסויים שיצאו משליטה",
             "plannedBlackCount": 30,
             "plannedWhiteCount": 94,
@@ -6283,7 +6183,7 @@ Content revision v34.16.1:
       },
       {
             "id": "travel",
-            "name": "חופשות, תחבורה וישראלים בחו\"ל",
+            "name": "קונקשן מהגיהנום",
             "description": "נתב\"ג, רכבת ישראל, מלונות, לואו-קוסט וטיולים",
             "plannedBlackCount": 20,
             "plannedWhiteCount": 35,
@@ -6349,7 +6249,7 @@ Content revision v34.16.1:
       },
       {
             "id": "money",
-            "name": "כסף, דיור וצרכנות",
+            "name": "יוקר מחיה",
             "description": "שכר דירה, משכנתה, מינוס, תשלומים והשקעות מפוקפקות",
             "plannedBlackCount": 25,
             "plannedWhiteCount": 55,
@@ -6440,7 +6340,7 @@ Content revision v34.16.1:
       },
       {
             "id": "social",
-            "name": "חברים, מסיבות וחיי חברה",
+            "name": "סטלה רעה",
             "description": "חברויות רעילות, אירוח, פומו, מסיבות וחשבונות שלא שולמו",
             "plannedBlackCount": 22,
             "plannedWhiteCount": 83,
@@ -6556,7 +6456,7 @@ Content revision v34.16.1:
       },
       {
             "id": "dirty-night",
-            "name": "לילה ארוך ומלוכלך",
+            "name": "אחרי חצות",
             "description": "מין, גוף, סטוצים והחלטות גרועות - למבוגרים בלבד",
             "plannedBlackCount": 30,
             "plannedWhiteCount": 105,
@@ -9335,48 +9235,19 @@ Content revision v34.16.1:
       const isBase = Boolean(options.isBase);
       const hasCards = isBase || expansionHasCards(pack);
       const isActive = isBase || activeExpansionIds.includes(pack.id);
-
-      button.type = "button";
-      button.className = "expansion-pack";
-      button.setAttribute("role", "switch");
+      const displayName = isBase ? "חבילת הבסיס" : pack.name;
+      button.type = "button"; button.className = "expansion-pack";
+      button.setAttribute("role", isBase ? "group" : "switch");
       button.setAttribute("aria-checked", String(isActive));
       button.setAttribute("aria-disabled", String(isBase || !hasCards));
-
-      if (!isBase && hasCards) {
-        button.dataset.packId = pack.id;
-      }
-
-      const copy = document.createElement("span");
-      copy.className = "expansion-pack-copy";
-
-      const name = document.createElement("span");
-      name.className = "expansion-pack-name";
-      name.textContent = isBase ? "חבילת הבסיס" : pack.name;
-
-      const meta = document.createElement("span");
-      meta.className = "expansion-pack-meta";
-
-      if (isBase) {
-        meta.textContent = `${baseWhiteCards.length} לבנים · ${baseBlackCards.length} שחורים · תמיד פעילה`;
-      } else if (hasCards) {
-        meta.textContent = `${pack.whiteCards.length} לבנים · ${pack.blackCards.length} שחורים · ${pack.description}`;
-      } else {
-        meta.textContent = `${plannedPackCardCount(pack)} קלפים מתוכננים · ${pack.description}`;
-      }
-
-      const state = document.createElement("span");
-      state.className = "expansion-pack-state";
-      state.textContent = isBase
-        ? "פעילה"
-        : !hasCards
-          ? "בקרוב"
-          : isActive
-            ? "פעילה"
-            : "כבויה";
-
-      copy.append(name, meta);
-      button.append(copy, state);
-      return button;
+      if (isBase) { button.disabled = true; button.setAttribute("aria-label", "חבילת הבסיס כלולה תמיד"); }
+      else if (hasCards) { button.dataset.packId = pack.id; button.setAttribute("aria-label", isActive ? `השבת את ${displayName}` : `הפעל את ${displayName}`); }
+      const copy=document.createElement("span"); copy.className="expansion-pack-copy";
+      const name=document.createElement("span"); name.className="expansion-pack-name"; name.textContent=displayName;
+      const meta=document.createElement("span"); meta.className="expansion-pack-meta";
+      meta.textContent=isBase ? `${baseBlackCards.length} שחורים · ${baseWhiteCards.length} לבנים` : hasCards ? `${pack.blackCards.length} שחורים · ${pack.whiteCards.length} לבנים` : `${plannedPackCardCount(pack)} קלפים מתוכננים`;
+      const state=document.createElement("span"); state.setAttribute("aria-hidden","true"); state.className=isBase ? "expansion-pack-base-state" : "expansion-pack-state"; if(isBase) state.textContent="כלולה תמיד";
+      copy.append(name,meta); button.append(copy,state); return button;
     }
 
     function renderExpansionPackControls() {
@@ -9407,6 +9278,8 @@ Content revision v34.16.1:
       );
 
       expansionQuickActions.hidden = available.length === 0;
+      baseOnlyPacks.setAttribute("aria-pressed", String(active.length === 0));
+      allPacks.setAttribute("aria-pressed", String(available.length > 0 && active.length === available.length));
 
       const totalActiveCards = blackCards.length + whiteCards.length;
       const activePackLabel =
@@ -9421,8 +9294,8 @@ Content revision v34.16.1:
       }
 
       expansionSummary.textContent = available.length
-        ? `${totalActiveCards} קלפים פעילים: חבילת הבסיס ועוד ${active.length} הרחבות (${activeExtraCount} קלפים נוספים).`
-        : `${totalActiveCards} קלפים פעילים. תשתית ההרחבות מוכנה; החבילות המתוכננות יוצגו כזמינות לאחר שנאשר את הקלפים שלהן.`;
+        ? `${totalActiveCards} קלפים · ${blackCards.length} שחורים · ${whiteCards.length} לבנים`
+        : `${totalActiveCards} קלפים פעילים`;
     }
 
     function applyActiveExpansionIds(ids, message) {
@@ -11532,7 +11405,7 @@ Content revision v34.16.1:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.16.1 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.16.2 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
@@ -11540,43 +11413,14 @@ Content revision v34.16.1:
       const isBase = Boolean(options.isBase);
       const hasCards = isBase || expansionHasCards(pack);
       const isActive = isBase || pendingTableExpansionIds.includes(pack.id);
-
-      button.type = "button";
-      button.className = "expansion-pack";
-      button.setAttribute("role", "switch");
-      button.setAttribute("aria-checked", String(isActive));
-      button.setAttribute("aria-disabled", String(isBase || !hasCards));
-
-      if (!isBase && hasCards) {
-        button.dataset.tablePackId = pack.id;
-      }
-
-      const copy = document.createElement("span");
-      copy.className = "expansion-pack-copy";
-
-      const name = document.createElement("span");
-      name.className = "expansion-pack-name";
-      name.textContent = isBase ? "חבילת הבסיס" : pack.name;
-
-      const meta = document.createElement("span");
-      meta.className = "expansion-pack-meta";
-      meta.textContent = isBase
-        ? `${baseWhiteCards.length} לבנים · ${baseBlackCards.length} שחורים · תמיד פעילה`
-        : hasCards
-          ? `${pack.whiteCards.length} לבנים · ${pack.blackCards.length} שחורים · ${pack.description}`
-          : `${plannedPackCardCount(pack)} קלפים מתוכננים · ${pack.description}`;
-
-      const state = document.createElement("span");
-      state.className = "expansion-pack-state";
-      state.textContent = isBase
-        ? "פעילה"
-        : !hasCards
-          ? "בקרוב"
-          : isActive ? "פעילה" : "כבויה";
-
-      copy.append(name, meta);
-      button.append(copy, state);
-      return button;
+      const displayName = isBase ? "חבילת הבסיס" : pack.name;
+      button.type="button"; button.className="expansion-pack";
+      button.setAttribute("role",isBase ? "group" : "switch"); button.setAttribute("aria-checked",String(isActive)); button.setAttribute("aria-disabled",String(isBase||!hasCards));
+      if(isBase){button.disabled=true;button.setAttribute("aria-label","חבילת הבסיס כלולה תמיד");} else if(hasCards){button.dataset.tablePackId=pack.id;button.setAttribute("aria-label",isActive ? `השבת את ${displayName}` : `הפעל את ${displayName}`);}
+      const copy=document.createElement("span");copy.className="expansion-pack-copy"; const name=document.createElement("span");name.className="expansion-pack-name";name.textContent=displayName;
+      const meta=document.createElement("span");meta.className="expansion-pack-meta";meta.textContent=isBase ? `${baseBlackCards.length} שחורים · ${baseWhiteCards.length} לבנים` : hasCards ? `${pack.blackCards.length} שחורים · ${pack.whiteCards.length} לבנים` : `${plannedPackCardCount(pack)} קלפים מתוכננים`;
+      const state=document.createElement("span");state.setAttribute("aria-hidden","true");state.className=isBase ? "expansion-pack-base-state" : "expansion-pack-state";if(isBase)state.textContent="כלולה תמיד";
+      copy.append(name,meta);button.append(copy,state);return button;
     }
 
     function renderTableExpansionControls() {
@@ -11611,12 +11455,14 @@ Content revision v34.16.1:
         tableState.activePacks
       );
 
-      tableExpansionQuickActions.hidden =
-        availableExpansionPacks().length === 0;
+      const available = availableExpansionPacks();
+      tableExpansionQuickActions.hidden = available.length === 0;
+      tableBaseOnlyPacks.setAttribute("aria-pressed", String(pendingTableExpansionIds.length === 0));
+      tableAllPacks.setAttribute("aria-pressed", String(available.length > 0 && pendingTableExpansionIds.length === available.length));
       tableExpansionMenuSummary.textContent =
         `${label} · ${metrics.total} קלפים`;
       tableExpansionSummary.textContent =
-        `${metrics.total} קלפים: ${metrics.black} שחורים ו-${metrics.white} לבנים.`;
+        `${metrics.total} קלפים · ${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableDeckChangeNotice.hidden = !changed;
       tableApplyDeckChanges.disabled = !changed;
     }
