@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.16.2:
-- Compact expansion pack controls with short names and switches
-- Moves aggregate actions above the pack list
-- Keeps all 1,183 cards and stored selections unchanged
+Content revision v34.16.3:
+- Shortens the expansion quick-action labels for one-line mobile display
+- Changes “רק חבילת הבסיס” to “חבילת בסיס”
+- Changes “הפעלת כל ההרחבות” to “כל ההרחבות”
+- Preserves all v34.16.2 pack switches, card content and game behavior
 - Internal deck content version remains 34.16
 -->
 
@@ -25,8 +26,8 @@ Content revision v34.16.2:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,183 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.2" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.2" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.3" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.3" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -36,7 +37,7 @@ Content revision v34.16.2:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,183 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.2" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.3" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2710,7 +2711,7 @@ Content revision v34.16.2:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.16.2
+       Offline table game — v34.16.3
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -5191,8 +5192,8 @@ Content revision v34.16.2:
 
           <div id="expansionPanel" class="settings-subpanel" hidden>
             <div id="expansionQuickActions" class="expansion-quick-actions" hidden>
-              <button id="baseOnlyPacks" class="expansion-quick-button" type="button" aria-pressed="false">רק חבילת הבסיס</button>
-              <button id="allPacks" class="expansion-quick-button" type="button" aria-pressed="false">הפעלת כל ההרחבות</button>
+              <button id="baseOnlyPacks" class="expansion-quick-button" type="button" aria-pressed="false">חבילת בסיס</button>
+              <button id="allPacks" class="expansion-quick-button" type="button" aria-pressed="false">כל ההרחבות</button>
             </div>
             <div id="expansionPackList" class="expansion-pack-list" aria-label="בחירת חבילות הרחבה"></div>
             <p id="expansionSummary" class="expansion-summary"></p>
@@ -5213,7 +5214,7 @@ Content revision v34.16.2:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.16.2 · 1,183 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.16.3 · 1,183 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5288,8 +5289,8 @@ Content revision v34.16.2:
 
           <div id="tableExpansionPanel" class="settings-subpanel" hidden>
             <div id="tableExpansionQuickActions" class="expansion-quick-actions">
-              <button id="tableBaseOnlyPacks" class="expansion-quick-button" type="button" aria-pressed="false">רק חבילת הבסיס</button>
-              <button id="tableAllPacks" class="expansion-quick-button" type="button" aria-pressed="false">הפעלת כל ההרחבות</button>
+              <button id="tableBaseOnlyPacks" class="expansion-quick-button" type="button" aria-pressed="false">חבילת בסיס</button>
+              <button id="tableAllPacks" class="expansion-quick-button" type="button" aria-pressed="false">כל ההרחבות</button>
             </div>
             <div id="tableExpansionPackList" class="expansion-pack-list" aria-label="בחירת חבילות למצב שולחן"></div>
             <p id="tableExpansionSummary" class="expansion-summary"></p>
@@ -5327,7 +5328,7 @@ Content revision v34.16.2:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.16.2</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.16.3</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -11405,7 +11406,7 @@ Content revision v34.16.2:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.16.2 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.16.3 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
