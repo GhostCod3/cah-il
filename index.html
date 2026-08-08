@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.16.4:
-- Remembers content-warning approval only for the installed PWA
-- Skips the content warning on later launches of the installed app
-- Keeps the content warning unchanged in the normal browser
-- Uses the next mode-selection click as the fullscreen user gesture after a skipped warning
-- Keeps first-run fullscreen on the content-warning approval button
-- Preserves all v34.16.3 cards, packs, installation, update and table-mode behavior
+Content revision v34.16.5:
+- Fixes the installed-PWA repeat-launch blank-card regression
+- Defers remembered-warning mode selection until the full script has initialized
+- Prevents showModeSelection from touching later-declared table/mode state during startup
+- Keeps remembered content-warning approval and next-mode fullscreen behavior
+- Preserves all v34.16.4 cards, packs, installation, update and table-mode behavior
 - Internal deck content version remains 34.16
 -->
 
@@ -28,8 +27,8 @@ Content revision v34.16.4:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,183 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.4" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.4" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.5" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.5" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -39,7 +38,7 @@ Content revision v34.16.4:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,183 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.4" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.5" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2713,7 +2712,7 @@ Content revision v34.16.4:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.16.4
+       Offline table game — v34.16.5
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -5216,7 +5215,7 @@ Content revision v34.16.4:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.16.4 · 1,183 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.16.5 · 1,183 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5330,7 +5329,7 @@ Content revision v34.16.4:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.16.4</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.16.5</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -9584,10 +9583,17 @@ Content revision v34.16.4:
         contentWarningAccepted = true;
         fullscreenOnNextModeChoice = true;
         closeContentGate();
-        showModeSelection();
 
-        requestAnimationFrame(() => {
-          revealQueuedAppUpdate();
+        // This branch runs while the classic script is still being
+        // evaluated. showModeSelection() touches mode/table variables
+        // declared later in the file, so defer it until the current
+        // script has finished initializing all state and rendered cards.
+        queueMicrotask(() => {
+          showModeSelection();
+
+          requestAnimationFrame(() => {
+            revealQueuedAppUpdate();
+          });
         });
         return;
       }
@@ -11461,7 +11467,7 @@ Content revision v34.16.4:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.16.4 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.16.5 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
