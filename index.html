@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.16.3:
-- Shortens the expansion quick-action labels for one-line mobile display
-- Changes “רק חבילת הבסיס” to “חבילת בסיס”
-- Changes “הפעלת כל ההרחבות” to “כל ההרחבות”
-- Preserves all v34.16.2 pack switches, card content and game behavior
+Content revision v34.16.4:
+- Remembers content-warning approval only for the installed PWA
+- Skips the content warning on later launches of the installed app
+- Keeps the content warning unchanged in the normal browser
+- Uses the next mode-selection click as the fullscreen user gesture after a skipped warning
+- Keeps first-run fullscreen on the content-warning approval button
+- Preserves all v34.16.3 cards, packs, installation, update and table-mode behavior
 - Internal deck content version remains 34.16
 -->
 
@@ -26,8 +28,8 @@ Content revision v34.16.3:
   <meta property="og:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta property="og:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta property="og:description" content="1,183 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.3" />
-  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.3" />
+  <meta property="og:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.4" />
+  <meta property="og:image:secure_url" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.4" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -37,7 +39,7 @@ Content revision v34.16.3:
   <meta name="twitter:url" content="https://ghostcod3.github.io/cah-il/" />
   <meta name="twitter:title" content="קלפים נגד האנושות — מהדורת 2026 בלי ברקסים" />
   <meta name="twitter:description" content="1,183 קלפים של הומור שחור, אבסורד ישראלי והחלטות גרועות." />
-  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.3" />
+  <meta name="twitter:image" content="https://ghostcod3.github.io/cah-il/cards-against-humanity-share.png?v=34.16.4" />
 
   <link rel="icon" type="image/png" sizes="32x32" href="cards-against-humanity-icon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="cards-against-humanity-icon-180.png" />
@@ -2711,7 +2713,7 @@ Content revision v34.16.3:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.16.3
+       Offline table game — v34.16.4
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -5214,7 +5216,7 @@ Content revision v34.16.3:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.16.3 · 1,183 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.16.4 · 1,183 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -5328,7 +5330,7 @@ Content revision v34.16.3:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.16.3</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.16.4</strong><br>
         מצב השולחן והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -8367,6 +8369,7 @@ Content revision v34.16.3:
     const appUpdateLater = document.getElementById("appUpdateLater");
 
     let contentWarningAccepted = false;
+    let fullscreenOnNextModeChoice = false;
     let deferredInstallPrompt = null;
     let browserInstallPromptTimedOut = false;
     let browserInstallFeedbackTimer = null;
@@ -8377,6 +8380,8 @@ Content revision v34.16.3:
     const MIN_BROWSER_INSTALL_PROGRESS_MS = 5000;
     const BROWSER_INSTALL_SKIP_KEY =
       "cah-browser-install-skip-v1";
+    const PWA_CONTENT_WARNING_ACCEPTED_KEY =
+      "cah-pwa-content-warning-accepted-v1";
 
     const modalReturnFocus = new WeakMap();
 
@@ -9505,6 +9510,37 @@ Content revision v34.16.3:
       }
     }
 
+    function hasAcceptedPwaContentWarning() {
+      if (!isInstalledPwa()) {
+        return false;
+      }
+
+      try {
+        return (
+          localStorage.getItem(
+            PWA_CONTENT_WARNING_ACCEPTED_KEY
+          ) === "1"
+        );
+      } catch {
+        return false;
+      }
+    }
+
+    function rememberPwaContentWarningAcceptance() {
+      if (!isInstalledPwa()) {
+        return;
+      }
+
+      try {
+        localStorage.setItem(
+          PWA_CONTENT_WARNING_ACCEPTED_KEY,
+          "1"
+        );
+      } catch {
+        // The warning will simply appear again next time.
+      }
+    }
+
     function showContentWarningGate() {
       browserInstallGate.hidden = true;
       contentGate.hidden = false;
@@ -9541,7 +9577,25 @@ Content revision v34.16.3:
     function initializeOpeningFlow() {
       setGameBackgroundInert(true);
 
-      if (isInstalledPwa() || browserInstallWasSkipped()) {
+      if (
+        isInstalledPwa() &&
+        hasAcceptedPwaContentWarning()
+      ) {
+        contentWarningAccepted = true;
+        fullscreenOnNextModeChoice = true;
+        closeContentGate();
+        showModeSelection();
+
+        requestAnimationFrame(() => {
+          revealQueuedAppUpdate();
+        });
+        return;
+      }
+
+      if (
+        isInstalledPwa() ||
+        browserInstallWasSkipped()
+      ) {
         showContentWarningGate();
         return;
       }
@@ -9767,6 +9821,7 @@ Content revision v34.16.3:
       const fullscreenRequest = requestGameFullscreen();
 
       contentWarningAccepted = true;
+      rememberPwaContentWarningAcceptance();
       closeContentGate();
       showModeSelection();
 
@@ -11406,7 +11461,7 @@ Content revision v34.16.3:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.16.3 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.16.4 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
@@ -11761,6 +11816,42 @@ Content revision v34.16.3:
       modeSelectOverlay.classList.add("is-open");
       syncModalOpenState();
       focusInsideModal(modeSelectOverlay, modeRegularButton);
+    }
+
+    function activateModeFromSelection(action, event) {
+      const shouldRequestFullscreen =
+        fullscreenOnNextModeChoice &&
+        isInstalledPwa() &&
+        !gameFullscreenElement();
+
+      fullscreenOnNextModeChoice = false;
+
+      const fullscreenRequest =
+        shouldRequestFullscreen
+          ? requestGameFullscreen()
+          : null;
+
+      action();
+
+      if (!fullscreenRequest) {
+        return;
+      }
+
+      fullscreenRequest.then((result) => {
+        haptic(18);
+
+        const fullscreenLike =
+          result.ok ||
+          Boolean(gameFullscreenElement()) ||
+          isInstalledPwa();
+
+        if (!fullscreenLike) {
+          showFullscreenFailure(
+            result,
+            event?.currentTarget || modeFullscreenButton
+          );
+        }
+      });
     }
 
     function activateRegularMode() {
@@ -12461,8 +12552,25 @@ Content revision v34.16.3:
       openListBrowser(currentListType, "table");
     });
 
-    modeRegularButton.addEventListener("click", activateRegularMode);
-    modeTableButton.addEventListener("click", openTableApp);
+    modeRegularButton.addEventListener(
+      "click",
+      (event) => {
+        activateModeFromSelection(
+          activateRegularMode,
+          event
+        );
+      }
+    );
+
+    modeTableButton.addEventListener(
+      "click",
+      (event) => {
+        activateModeFromSelection(
+          openTableApp,
+          event
+        );
+      }
+    );
     tableModeMenuButton.addEventListener("click", openTableApp);
     tableExitButton.addEventListener("click", showModeSelection);
     tableRoleButton.addEventListener("click", showTableRoleSelection);
