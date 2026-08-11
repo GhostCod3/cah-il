@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.19.17:
+Content revision v34.19.25:
+- Makes active-pack opening and closing immediate
+- Smooth-scrolls the disclosure to the top only after opening
+- Cancels scrolling and removes helper space immediately on close
+- Restores reliable scrolling to active packs from the role-selection screen
+- Smoothly crossfades between the game screen and mode chooser
+- Restores the pending-deck bar to a viewport-level bottom layer
+- Keeps the base/all quick actions in the pack list's normal scroll flow
+- Slides both game menus smoothly up from the bottom and back down on close
+- Lets the top handle follow a downward swipe and dismiss either menu
+- Keeps menu actions live while the outgoing sheet finishes its animation
+- Animates the pending-deck bar out before hiding it
+- Releases reserved scroll space while tracking the sheet's changing scroll limit
+- Adds focused haptics to role choice and deck apply/cancel actions
 - Keeps pending friends-deck changes visible in a floating confirmation bar
 - Reserves dynamic scroll space so the confirmation bar covers no menu content
 - Highlights unapplied pack selections and confirms successful deck changes
@@ -1217,13 +1230,32 @@ Content revision v34.19.17:
       align-items: flex-end;
       justify-content: center;
       padding: 12px;
+      background: rgba(0,0,0,0);
+      backdrop-filter: blur(0);
+      -webkit-backdrop-filter: blur(0);
+      transition:
+        background-color 220ms ease,
+        backdrop-filter 220ms ease,
+        -webkit-backdrop-filter 220ms ease;
+    }
+
+    .settings-overlay.is-open {
+      display: flex;
       background: rgba(0,0,0,.62);
       backdrop-filter: blur(7px);
       -webkit-backdrop-filter: blur(7px);
     }
 
-    .settings-overlay.is-open {
+    .settings-overlay.is-opening,
+    .settings-overlay.is-closing {
       display: flex;
+      background: rgba(0,0,0,0);
+      backdrop-filter: blur(0);
+      -webkit-backdrop-filter: blur(0);
+    }
+
+    .settings-overlay.is-closing {
+      pointer-events: none;
     }
 
     .table-settings-overlay {
@@ -1257,14 +1289,54 @@ Content revision v34.19.17:
       padding: 10px 16px calc(18px + env(safe-area-inset-bottom));
       background: #171717;
       box-shadow: 0 -18px 70px rgba(0,0,0,.55);
+      transform: translate3d(0, calc(100% + 28px), 0);
+      transition: transform 300ms cubic-bezier(.22,1,.36,1);
+      will-change: transform;
+    }
+
+    .settings-overlay.is-open .settings-sheet {
+      transform: translate3d(
+        0,
+        var(--settings-sheet-drag-y, 0px),
+        0
+      );
+    }
+
+    .settings-overlay.is-opening .settings-sheet,
+    .settings-overlay.is-closing .settings-sheet {
+      transform: translate3d(0, calc(100% + 28px), 0);
+    }
+
+    .settings-overlay.is-dragging .settings-sheet {
+      transition: none;
     }
 
     .settings-handle {
+      position: relative;
+      width: min(180px, 45%);
+      height: 29px;
+      margin: -12px auto -2px;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: grab;
+    }
+
+    .settings-handle::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
       width: 42px;
       height: 5px;
-      margin: 0 auto 10px;
       border-radius: 99px;
       background: #555;
+      transform: translate(-50%, -50%);
+    }
+
+    .settings-overlay.is-dragging .settings-handle {
+      cursor: grabbing;
     }
 
     .settings-heading {
@@ -1543,10 +1615,21 @@ Content revision v34.19.17:
     .settings-subpanel {
       display: grid;
       gap: 9px;
+      box-sizing: border-box;
+      overflow: hidden;
       padding: 9px;
       border: 1px solid #343434;
       border-radius: 16px;
       background: #111;
+    }
+
+    .settings-disclosure-scroll-spacer {
+      display: block;
+      flex: 0 0 auto;
+      width: 100%;
+      min-height: 0;
+      pointer-events: none;
+      visibility: hidden;
     }
 
     .settings-subpanel[hidden] {
@@ -1668,7 +1751,7 @@ Content revision v34.19.17:
     .expansion-pack:active:not([aria-disabled="true"]) { transform: scale(.992); }
     .expansion-pack[aria-disabled="true"] { cursor: default; }
     .expansion-pack-base-state { min-width: 82px; padding: 6px 9px; border: 1px solid #484848; border-radius: 999px; background: #303030; color: #d2d2ce; font-size: .7rem; font-weight: 700; text-align: center; white-space: nowrap; }
-    .expansion-quick-actions { position: sticky; top: 0; z-index: 4; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 0 9px; background: linear-gradient(to bottom,#171717 0%,#171717 76%,rgba(23,23,23,0) 100%); }
+    .expansion-quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 0 9px; }
     .expansion-quick-button { min-height: 44px; padding: 9px 10px; background: #202020; color: #e6e6e6; border: 1px solid #383838; font-size: .82rem; }
     .expansion-quick-button[aria-pressed="true"] { border-color: #f5f5f1; background: #f5f5f1; color: #111; box-shadow: 0 7px 20px rgba(0,0,0,.24); }
 
@@ -2971,7 +3054,7 @@ Content revision v34.19.17:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.19.17
+       Offline table game — v34.19.25
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -3008,6 +3091,19 @@ Content revision v34.19.17:
     .mode-select-overlay {
       padding-bottom:
         calc(82px + env(safe-area-inset-bottom));
+      opacity: 0;
+      transition: opacity 240ms ease;
+    }
+
+    .mode-select-overlay.is-open {
+      opacity: 1;
+    }
+
+    .mode-select-overlay.is-opening,
+    .mode-select-overlay.is-closing {
+      display: flex;
+      opacity: 0;
+      pointer-events: none;
     }
 
     .mode-select-fullscreen {
@@ -3025,6 +3121,22 @@ Content revision v34.19.17:
       background: rgba(20, 20, 20, .97);
       box-shadow: 0 28px 100px rgba(0, 0, 0, .62);
       text-align: center;
+      opacity: .96;
+      transform: translate3d(0, 16px, 0) scale(.985);
+      transition:
+        transform 280ms cubic-bezier(.22,1,.36,1),
+        opacity 220ms ease;
+    }
+
+    .mode-select-overlay.is-open .mode-select-card {
+      opacity: 1;
+      transform: none;
+    }
+
+    .mode-select-overlay.is-opening .mode-select-card,
+    .mode-select-overlay.is-closing .mode-select-card {
+      opacity: .96;
+      transform: translate3d(0, 16px, 0) scale(.985);
     }
 
     .mode-select-kicker,
@@ -3778,7 +3890,13 @@ Content revision v34.19.17:
     }
 
     .table-settings-overlay .settings-sheet {
-      transition: padding-bottom .2s ease;
+      transition:
+        transform 300ms cubic-bezier(.22,1,.36,1),
+        padding-bottom .2s ease;
+    }
+
+    .table-settings-overlay.is-releasing-deck-space .settings-sheet {
+      overflow-anchor: none;
     }
 
     .table-settings-overlay.has-pending-deck-changes .settings-sheet {
@@ -3802,25 +3920,41 @@ Content revision v34.19.17:
     }
 
     .table-deck-change-notice {
-      position: fixed;
+      position: absolute;
       z-index: 12;
       left: 50%;
       bottom: calc(24px + env(safe-area-inset-bottom));
       width: min(calc(100vw - 48px), 528px);
       margin: 0;
       padding: 14px;
-      transform: translateX(-50%);
+      opacity: 0;
+      transform: translate(-50%, 16px);
       border: 1px solid #887447;
       border-radius: 17px;
       background: rgba(31,28,21,.97);
       box-shadow: 0 16px 44px rgba(0,0,0,.58);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      animation: tableDeckChangeNoticeIn .22s ease-out both;
+      pointer-events: none;
+      transition:
+        opacity .18s ease,
+        transform .2s ease;
     }
 
     .table-deck-change-notice[hidden] {
       display: none !important;
+    }
+
+    .table-deck-change-notice.is-visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
+      pointer-events: auto;
+    }
+
+    .table-deck-change-notice.is-exiting {
+      opacity: 0;
+      transform: translate(-50%, 16px);
+      pointer-events: none;
     }
 
     .table-deck-change-notice strong {
@@ -3861,24 +3995,17 @@ Content revision v34.19.17:
       color: #ddd;
     }
 
-    @keyframes tableDeckChangeNoticeIn {
-      from {
-        opacity: 0;
-        transform: translate(-50%, 16px);
-      }
-      to {
-        opacity: 1;
-        transform: translate(-50%, 0);
-      }
-    }
-
     @media (prefers-reduced-motion: reduce) {
-      .table-settings-overlay .settings-sheet {
-        transition: none;
+      .settings-overlay,
+      .settings-overlay .settings-sheet,
+      .settings-subpanel,
+      .mode-select-overlay,
+      .mode-select-card {
+        transition: none !important;
       }
 
       .table-deck-change-notice {
-        animation: none;
+        transition: none;
       }
     }
 
@@ -6452,7 +6579,7 @@ Content revision v34.19.17:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.19.17 · 1,183 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.19.25 · 1,183 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -6460,8 +6587,15 @@ Content revision v34.19.17:
 
 
 
-  <div id="tableSettingsOverlay" class="settings-overlay table-settings-overlay" hidden>
-    <section class="settings-sheet" role="dialog" aria-modal="true" aria-labelledby="tableSettingsTitle">
+  <div
+    id="tableSettingsOverlay"
+    class="settings-overlay table-settings-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="tableSettingsTitle"
+    hidden
+  >
+    <section class="settings-sheet">
       <div class="settings-handle" aria-hidden="true"></div>
 
       <div class="settings-heading">
@@ -6562,33 +6696,33 @@ Content revision v34.19.17:
         </section>
       </div>
 
-      <div
-        id="tableDeckChangeNotice"
-        class="table-deck-change-notice"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        hidden
-      >
-        <strong>⚠ יש שינויים שלא הוחלו</strong>
-        <p>
-          החלת החפיסה תאפס את היד והקלפים שנשלפו. השם והניקוד יישמרו.
-        </p>
-        <div class="table-deck-change-actions">
-          <button id="tableApplyDeckChanges" class="expansion-quick-button table-deck-apply" type="button">
-            החל חפיסה
-          </button>
-          <button id="tableCancelDeckChanges" class="expansion-quick-button table-deck-cancel" type="button">
-            ביטול שינויים
-          </button>
-        </div>
-      </div>
-
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.19.17</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.19.25</strong><br>
         המשחק והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
+
+    <div
+      id="tableDeckChangeNotice"
+      class="table-deck-change-notice"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      hidden
+    >
+      <strong>⚠ יש שינויים שלא הוחלו</strong>
+      <p>
+        החלת החפיסה תאפס את היד והקלפים שנשלפו. השם והניקוד יישמרו.
+      </p>
+      <div class="table-deck-change-actions">
+        <button id="tableApplyDeckChanges" class="expansion-quick-button table-deck-apply" type="button">
+          החל חפיסה
+        </button>
+        <button id="tableCancelDeckChanges" class="expansion-quick-button table-deck-cancel" type="button">
+          ביטול שינויים
+        </button>
+      </div>
+    </div>
   </div>
 
 
@@ -9533,6 +9667,7 @@ Content revision v34.19.17:
 
     const settingsButton = document.getElementById("settingsButton");
     const settingsOverlay = document.getElementById("settingsOverlay");
+    const settingsSheet = settingsOverlay.querySelector(".settings-sheet");
     const settingsClose = document.getElementById("settingsClose");
     const expansionPackList = document.getElementById("expansionPackList");
     const expansionMenuSummary = document.getElementById("expansionMenuSummary");
@@ -9584,6 +9719,7 @@ Content revision v34.19.17:
       document.getElementById("browserInstallFeedback");
     const tableSettingsButton = document.getElementById("tableSettingsButton");
     const tableSettingsOverlay = document.getElementById("tableSettingsOverlay");
+    const tableSettingsSheet = tableSettingsOverlay.querySelector(".settings-sheet");
     const tableSettingsClose = document.getElementById("tableSettingsClose");
     const tableGuideButton = document.getElementById("tableGuideButton");
     const tableRoleGuideButton = document.getElementById("tableRoleGuideButton");
@@ -9824,9 +9960,17 @@ Content revision v34.19.17:
     }
 
     function syncModalOpenState() {
+      const closingModalSurfaceIsVisible = [
+        ...document.querySelectorAll(
+          ".settings-overlay.is-closing, " +
+          ".mode-select-overlay.is-closing"
+        )
+      ].some((overlay) => !overlay.hidden);
+
       document.body.classList.toggle(
         "modal-open",
-        openModalRoots().length > 0
+        openModalRoots().length > 0 ||
+          closingModalSurfaceIsVisible
       );
     }
 
@@ -9845,6 +9989,521 @@ Content revision v34.19.17:
         const target = fallbackCandidates.find(isVisibleForFocus);
         target?.focus({ preventScroll: true });
       });
+    }
+
+    const SETTINGS_SHEET_MOTION_MS = 300;
+    const settingsSheetMotionRecords = new WeakMap();
+
+    function settingsSheetMotionReduced() {
+      return window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+    }
+
+    function clearSettingsSheetMotionRecord(overlay) {
+      const record = settingsSheetMotionRecords.get(overlay);
+      if (!record) return;
+
+      clearTimeout(record.timer);
+      record.sheet.removeEventListener(
+        "transitionend",
+        record.onTransitionEnd
+      );
+      settingsSheetMotionRecords.delete(overlay);
+    }
+
+    function openAnimatedSettingsSheet(overlay) {
+      if (!overlay) return false;
+
+      if (
+        !overlay.hidden &&
+        overlay.classList.contains("is-open") &&
+        !overlay.classList.contains("is-closing")
+      ) {
+        return false;
+      }
+
+      clearSettingsSheetMotionRecord(overlay);
+      overlay.hidden = false;
+      overlay.removeAttribute("inert");
+      overlay.classList.remove(
+        "is-closing",
+        "is-dragging"
+      );
+      overlay.style.removeProperty("--settings-sheet-drag-y");
+      overlay.classList.add("is-opening", "is-open");
+
+      void overlay.offsetWidth;
+
+      const revealSheet = () => {
+        if (
+          overlay.classList.contains("is-open") &&
+          !overlay.classList.contains("is-closing")
+        ) {
+          overlay.classList.remove("is-opening");
+        }
+      };
+
+      if (settingsSheetMotionReduced()) {
+        revealSheet();
+      } else {
+        requestAnimationFrame(revealSheet);
+      }
+
+      syncModalOpenState();
+      return true;
+    }
+
+    function closeAnimatedSettingsSheet(overlay) {
+      if (
+        !overlay ||
+        overlay.hidden ||
+        overlay.classList.contains("is-closing") ||
+        !overlay.classList.contains("is-open")
+      ) {
+        return false;
+      }
+
+      clearSettingsSheetMotionRecord(overlay);
+      overlay.dispatchEvent(
+        new CustomEvent("settings-sheet-close-start")
+      );
+
+      const sheet = overlay.querySelector(".settings-sheet");
+
+      if (overlay.classList.contains("is-dragging")) {
+        overlay.classList.remove("is-dragging");
+        void sheet?.offsetWidth;
+      }
+
+      overlay.classList.remove("is-opening", "is-open");
+      overlay.classList.add("is-closing");
+      overlay.setAttribute("inert", "");
+      syncModalOpenState();
+
+      if (!sheet) {
+        overlay.hidden = true;
+        overlay.classList.remove("is-closing");
+        overlay.removeAttribute("inert");
+        overlay.style.removeProperty("--settings-sheet-drag-y");
+        syncModalOpenState();
+        return true;
+      }
+
+      let record = null;
+
+      const finishClose = () => {
+        if (settingsSheetMotionRecords.get(overlay) !== record) {
+          return;
+        }
+
+        clearSettingsSheetMotionRecord(overlay);
+
+        if (!overlay.classList.contains("is-closing")) return;
+
+        overlay.hidden = true;
+        overlay.classList.remove(
+          "is-closing",
+          "is-dragging",
+          "is-opening"
+        );
+        overlay.removeAttribute("inert");
+        overlay.style.removeProperty("--settings-sheet-drag-y");
+        syncModalOpenState();
+      };
+
+      const onTransitionEnd = (event) => {
+        if (
+          event.target === sheet &&
+          event.propertyName === "transform"
+        ) {
+          finishClose();
+        }
+      };
+
+      sheet.addEventListener("transitionend", onTransitionEnd);
+
+      record = {
+        sheet,
+        onTransitionEnd,
+        timer: setTimeout(
+          finishClose,
+          settingsSheetMotionReduced()
+            ? 0
+            : SETTINGS_SHEET_MOTION_MS + 80
+        )
+      };
+      settingsSheetMotionRecords.set(overlay, record);
+
+      return true;
+    }
+
+    function enableSettingsSheetSwipeToClose(
+      overlay,
+      closeSheet
+    ) {
+      const handle = overlay?.querySelector(".settings-handle");
+      const sheet = overlay?.querySelector(".settings-sheet");
+      if (!overlay || !handle || !sheet) return;
+
+      let gesture = null;
+      let snapBackTimer = 0;
+
+      const now = () => {
+        const performanceNow = window.performance?.now?.();
+        return Number.isFinite(performanceNow)
+          ? performanceNow
+          : Date.now();
+      };
+
+      function releasePointer(pointerId) {
+        try {
+          if (handle.hasPointerCapture?.(pointerId)) {
+            handle.releasePointerCapture(pointerId);
+          }
+        } catch {
+          // Pointer capture can already be released by the browser.
+        }
+      }
+
+      function cancelActiveGesture() {
+        clearTimeout(snapBackTimer);
+        snapBackTimer = 0;
+
+        if (gesture) {
+          const pointerId = gesture.pointerId;
+          gesture = null;
+          releasePointer(pointerId);
+        }
+      }
+
+      function trackPointer(event) {
+        if (!gesture) return;
+
+        const eventY = Number(event.clientY);
+        const y = Number.isFinite(eventY)
+          ? eventY
+          : gesture.startY;
+        const timestamp = now();
+        const sheetHeight = Math.max(
+          sheet.getBoundingClientRect().height,
+          320
+        );
+
+        gesture.offset = Math.min(
+          Math.max(0, y - gesture.startY),
+          sheetHeight + 40
+        );
+        gesture.samples.push({ y, timestamp });
+
+        while (
+          gesture.samples.length > 2 &&
+          timestamp - gesture.samples[0].timestamp > 120
+        ) {
+          gesture.samples.shift();
+        }
+
+        overlay.style.setProperty(
+          "--settings-sheet-drag-y",
+          `${Math.round(gesture.offset)}px`
+        );
+      }
+
+      function finishGesture(event, cancelled = false) {
+        if (
+          !gesture ||
+          event.pointerId !== gesture.pointerId
+        ) {
+          return;
+        }
+
+        trackPointer(event);
+
+        const activeGesture = gesture;
+        const samples = activeGesture.samples;
+        const firstSample = samples[0];
+        const lastSample = samples.at(-1);
+        const elapsed = Math.max(
+          1,
+          lastSample.timestamp - firstSample.timestamp
+        );
+        const velocity = Math.max(
+          0,
+          (lastSample.y - firstSample.y) / elapsed
+        );
+        const sheetHeight = Math.max(
+          sheet.getBoundingClientRect().height,
+          320
+        );
+        const distanceThreshold = Math.min(
+          130,
+          Math.max(84, sheetHeight * .18)
+        );
+        const shouldClose =
+          !cancelled &&
+          (
+            activeGesture.offset >= distanceThreshold ||
+            (
+              activeGesture.offset >= 32 &&
+              velocity >= .5
+            )
+          );
+        const pointerId = activeGesture.pointerId;
+
+        gesture = null;
+        releasePointer(pointerId);
+        overlay.classList.remove("is-dragging");
+        void sheet.offsetWidth;
+
+        if (shouldClose) {
+          haptic(10);
+          closeSheet();
+          return;
+        }
+
+        requestAnimationFrame(() => {
+          if (
+            overlay.classList.contains("is-open") &&
+            !overlay.classList.contains("is-closing") &&
+            !overlay.classList.contains("is-dragging")
+          ) {
+            overlay.style.setProperty(
+              "--settings-sheet-drag-y",
+              "0px"
+            );
+
+            snapBackTimer = setTimeout(() => {
+              if (!overlay.classList.contains("is-dragging")) {
+                overlay.style.removeProperty(
+                  "--settings-sheet-drag-y"
+                );
+              }
+              snapBackTimer = 0;
+            }, SETTINGS_SHEET_MOTION_MS + 40);
+          }
+        });
+      }
+
+      handle.addEventListener("pointerdown", (event) => {
+        if (
+          event.isPrimary === false ||
+          (typeof event.button === "number" && event.button !== 0) ||
+          !overlay.classList.contains("is-open") ||
+          overlay.classList.contains("is-closing")
+        ) {
+          return;
+        }
+
+        cancelActiveGesture();
+        clearTimeout(snapBackTimer);
+        snapBackTimer = 0;
+
+        const eventY = Number(event.clientY);
+        const startY = Number.isFinite(eventY) ? eventY : 0;
+        const timestamp = now();
+
+        gesture = {
+          pointerId: event.pointerId,
+          startY,
+          offset: 0,
+          samples: [{ y: startY, timestamp }]
+        };
+
+        overlay.style.setProperty(
+          "--settings-sheet-drag-y",
+          "0px"
+        );
+        overlay.classList.add("is-dragging");
+
+        try {
+          handle.setPointerCapture?.(event.pointerId);
+        } catch {
+          // Dragging still works when pointer capture is unavailable.
+        }
+
+        event.preventDefault();
+      });
+
+      handle.addEventListener("pointermove", (event) => {
+        if (
+          !gesture ||
+          event.pointerId !== gesture.pointerId
+        ) {
+          return;
+        }
+
+        trackPointer(event);
+        event.preventDefault();
+      });
+
+      handle.addEventListener("pointerup", (event) => {
+        finishGesture(event);
+      });
+
+      handle.addEventListener("pointercancel", (event) => {
+        finishGesture(event, true);
+      });
+
+      handle.addEventListener("lostpointercapture", (event) => {
+        finishGesture(event, true);
+      });
+
+      overlay.addEventListener(
+        "settings-sheet-close-start",
+        cancelActiveGesture
+      );
+    }
+
+    const settingsDisclosureScrollRecords = new WeakMap();
+
+    function settingsDisclosureTargetTop(
+      toggle,
+      scrollContainer
+    ) {
+      const containerRect =
+        scrollContainer.getBoundingClientRect();
+      const toggleRect = toggle.getBoundingClientRect();
+
+      return Math.max(
+        0,
+        scrollContainer.scrollTop +
+          toggleRect.top -
+          containerRect.top -
+          10
+      );
+    }
+
+    function clearSettingsDisclosureScroll(scrollContainer) {
+      if (!scrollContainer) return;
+
+      const record =
+        settingsDisclosureScrollRecords.get(scrollContainer);
+      if (!record) return;
+
+      clearTimeout(record.timer);
+
+      if (
+        record.scrollStarted &&
+        typeof scrollContainer.scrollTo === "function"
+      ) {
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollTop,
+          behavior: "auto"
+        });
+      }
+
+      record.spacer?.remove();
+      settingsDisclosureScrollRecords.delete(scrollContainer);
+    }
+
+    function scrollSettingsDisclosureIntoView(
+      toggle,
+      scrollContainer
+    ) {
+      if (!toggle || !scrollContainer) return;
+
+      clearSettingsDisclosureScroll(scrollContainer);
+
+      const record = {
+        timer: 0,
+        scrollStarted: false,
+        spacer: null
+      };
+      settingsDisclosureScrollRecords.set(
+        scrollContainer,
+        record
+      );
+
+      record.timer = setTimeout(() => {
+        if (
+          settingsDisclosureScrollRecords.get(
+            scrollContainer
+          ) !== record
+        ) {
+          return;
+        }
+
+        const targetTop = settingsDisclosureTargetTop(
+          toggle,
+          scrollContainer
+        );
+        const naturalMaxScrollTop = Math.max(
+          0,
+          scrollContainer.scrollHeight -
+            scrollContainer.clientHeight
+        );
+        const requiredScrollRoom = Math.ceil(
+          Math.max(0, targetTop - naturalMaxScrollTop)
+        );
+
+        if (requiredScrollRoom > 0) {
+          const spacer = document.createElement("div");
+          spacer.className =
+            "settings-disclosure-scroll-spacer";
+          spacer.setAttribute("aria-hidden", "true");
+          spacer.style.height =
+            `${requiredScrollRoom + 2}px`;
+          scrollContainer.appendChild(spacer);
+          record.spacer = spacer;
+        }
+
+        void scrollContainer.scrollHeight;
+
+        const settledTargetTop =
+          settingsDisclosureTargetTop(
+            toggle,
+            scrollContainer
+          );
+        record.scrollStarted = true;
+
+        if (typeof scrollContainer.scrollTo === "function") {
+          scrollContainer.scrollTo({
+            top: settledTargetTop,
+            behavior: settingsSheetMotionReduced()
+              ? "auto"
+              : "smooth"
+          });
+        } else {
+          scrollContainer.scrollTop = settledTargetTop;
+        }
+      }, 32);
+    }
+
+    function setSettingsSubpanelOpen(
+      panel,
+      toggle,
+      open,
+      {
+        scrollContainer = null,
+        alignToggle = true
+      } = {}
+    ) {
+      if (!panel || !toggle) return;
+
+      clearSettingsDisclosureScroll(scrollContainer);
+
+      const shouldOpen = Boolean(open);
+      toggle.setAttribute(
+        "aria-expanded",
+        String(shouldOpen)
+      );
+      panel.hidden = !shouldOpen;
+      panel.removeAttribute("inert");
+      panel.classList.remove(
+        "is-animating",
+        "is-opening-panel",
+        "is-closing-panel",
+        "is-compositor-closing"
+      );
+      panel.style.removeProperty("height");
+      panel.style.removeProperty("opacity");
+
+      if (alignToggle && shouldOpen) {
+        scrollSettingsDisclosureIntoView(
+          toggle,
+          scrollContainer
+        );
+      }
     }
 
     function trapFocusInsideTopModal(event) {
@@ -10682,28 +11341,44 @@ Content revision v34.19.17:
       );
     }
 
-    function setExpansionPanelOpen(open) {
-      expansionPanel.hidden = !open;
-      expansionPanelToggle.setAttribute(
-        "aria-expanded",
-        String(open)
+    function setExpansionPanelOpen(
+      open,
+      { alignToggle = true } = {}
+    ) {
+      setSettingsSubpanelOpen(
+        expansionPanel,
+        expansionPanelToggle,
+        open,
+        {
+          scrollContainer: settingsSheet,
+          alignToggle
+        }
       );
     }
 
     function openSettings() {
-      setExpansionPanelOpen(false);
+      if (
+        !settingsOverlay.hidden &&
+        settingsOverlay.classList.contains("is-open") &&
+        !settingsOverlay.classList.contains("is-closing")
+      ) {
+        return;
+      }
+
+      setExpansionPanelOpen(false, { alignToggle: false });
       rememberModalTrigger(settingsOverlay);
-      settingsOverlay.hidden = false;
-      settingsOverlay.classList.add("is-open");
-      syncModalOpenState();
-      focusInsideModal(settingsOverlay, settingsClose);
+
+      if (openAnimatedSettingsSheet(settingsOverlay)) {
+        focusInsideModal(settingsOverlay, settingsClose);
+      }
     }
 
     function closeSettings() {
-      settingsOverlay.classList.remove("is-open");
-      settingsOverlay.hidden = true;
-      syncModalOpenState();
-      restoreModalTrigger(settingsOverlay);
+      clearSettingsDisclosureScroll(settingsSheet);
+
+      if (closeAnimatedSettingsSheet(settingsOverlay)) {
+        restoreModalTrigger(settingsOverlay);
+      }
     }
 
     settingsButton.addEventListener("click", openSettings);
@@ -10713,8 +11388,15 @@ Content revision v34.19.17:
       if (event.target === settingsOverlay) closeSettings();
     });
 
+    enableSettingsSheetSwipeToClose(
+      settingsOverlay,
+      closeSettings
+    );
+
     expansionPanelToggle.addEventListener("click", () => {
-      setExpansionPanelOpen(expansionPanel.hidden);
+      setExpansionPanelOpen(
+        expansionPanelToggle.getAttribute("aria-expanded") !== "true"
+      );
     });
 
     expansionPackList.addEventListener("click", (event) => {
@@ -12351,6 +13033,9 @@ Content revision v34.19.17:
        Offline table game — v34.9
        ------------------------------------------------------------------ */
     const modeSelectOverlay = document.getElementById("modeSelectOverlay");
+    const modeSelectCard = modeSelectOverlay.querySelector(
+      ".mode-select-card"
+    );
     const modeChoiceGrid = modeSelectOverlay.querySelector(".mode-choice-grid");
     const modeQuickButton = document.getElementById("modeQuickButton");
     const modeRegularButton = document.getElementById("modeRegularButton");
@@ -12906,6 +13591,11 @@ Content revision v34.19.17:
     let tableResetArmed = false;
     let tableResetTimer = 0;
     let tableDeckNoticeMeasureFrame = 0;
+    let tableDeckNoticeExitTimer = 0;
+    let tableDeckSpaceReleaseFrame = 0;
+    let tableDeckNoticeTransitionToken = 0;
+    const TABLE_DECK_NOTICE_EXIT_MS = 220;
+    const TABLE_DECK_SPACE_RELEASE_MS = 220;
 
     function sortedExpansionIds(ids) {
       return validExpansionIds(ids).sort();
@@ -12936,7 +13626,7 @@ Content revision v34.19.17:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.19.17 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.19.25 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
@@ -12974,26 +13664,180 @@ Content revision v34.19.17:
       });
     }
 
-    function syncTableDeckChangeNotice(changed) {
-      tableDeckChangeNotice.hidden = !changed;
-      tableApplyDeckChanges.disabled = !changed;
-      tableSettingsOverlay.classList.toggle(
-        "has-pending-deck-changes",
-        changed
+    function tableDeckMotionReduced() {
+      return window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+    }
+
+    function clearTableDeckNoticeTransitions() {
+      clearTimeout(tableDeckNoticeExitTimer);
+      cancelAnimationFrame(tableDeckSpaceReleaseFrame);
+      tableDeckNoticeExitTimer = 0;
+      tableDeckSpaceReleaseFrame = 0;
+    }
+
+    function clearTableDeckNoticeImmediately() {
+      clearTableDeckNoticeTransitions();
+      cancelAnimationFrame(tableDeckNoticeMeasureFrame);
+      tableDeckChangeNotice.classList.remove(
+        "is-visible",
+        "is-exiting"
       );
+      tableDeckChangeNotice.hidden = true;
+      tableSettingsOverlay.classList.remove(
+        "has-pending-deck-changes",
+        "is-releasing-deck-space"
+      );
+      tableSettingsOverlay.style.removeProperty(
+        "--table-deck-notice-height"
+      );
+    }
+
+    function releaseTableDeckNoticeSpace(token) {
+      if (token !== tableDeckNoticeTransitionToken) return;
+
+      const startScrollTop = tableSettingsSheet.scrollTop;
+      const duration = tableDeckMotionReduced()
+        ? 0
+        : TABLE_DECK_SPACE_RELEASE_MS;
+      const startedAt = performance.now();
+
+      tableSettingsOverlay.classList.add(
+        "is-releasing-deck-space"
+      );
+      tableSettingsOverlay.classList.remove(
+        "has-pending-deck-changes"
+      );
+
+      function finishSpaceRelease() {
+        if (token !== tableDeckNoticeTransitionToken) return;
+
+        const maximumScrollTop = Math.max(
+          0,
+          tableSettingsSheet.scrollHeight -
+          tableSettingsSheet.clientHeight
+        );
+
+        tableSettingsSheet.scrollTop = Math.min(
+          startScrollTop,
+          maximumScrollTop
+        );
+        tableSettingsOverlay.classList.remove(
+          "is-releasing-deck-space"
+        );
+        tableSettingsOverlay.style.removeProperty(
+          "--table-deck-notice-height"
+        );
+        tableDeckSpaceReleaseFrame = 0;
+      }
+
+      if (duration === 0) {
+        finishSpaceRelease();
+        return;
+      }
+
+      function followScrollLimit(now) {
+        if (token !== tableDeckNoticeTransitionToken) return;
+
+        const maximumScrollTop = Math.max(
+          0,
+          tableSettingsSheet.scrollHeight -
+          tableSettingsSheet.clientHeight
+        );
+
+        tableSettingsSheet.scrollTop = Math.min(
+          startScrollTop,
+          maximumScrollTop
+        );
+
+        if (now - startedAt < duration) {
+          tableDeckSpaceReleaseFrame = requestAnimationFrame(
+            followScrollLimit
+          );
+        } else {
+          finishSpaceRelease();
+        }
+      }
+
+      tableDeckSpaceReleaseFrame = requestAnimationFrame(
+        followScrollLimit
+      );
+    }
+
+    function finishTableDeckNoticeExit(token) {
+      if (
+        token !== tableDeckNoticeTransitionToken ||
+        !tableDeckChangeNotice.classList.contains("is-exiting")
+      ) {
+        return;
+      }
+
+      tableDeckNoticeExitTimer = 0;
+      tableDeckChangeNotice.hidden = true;
+      tableDeckChangeNotice.classList.remove(
+        "is-visible",
+        "is-exiting"
+      );
+      releaseTableDeckNoticeSpace(token);
+    }
+
+    function syncTableDeckChangeNotice(
+      changed,
+      { immediate = false } = {}
+    ) {
+      const token = ++tableDeckNoticeTransitionToken;
+      const wasHidden = tableDeckChangeNotice.hidden;
+
+      clearTableDeckNoticeTransitions();
+      tableApplyDeckChanges.disabled = !changed;
       tableExpansionPanelToggle.classList.toggle(
         "has-pending-deck-changes",
         changed
       );
 
       if (changed) {
-        measureTableDeckChangeNotice();
-      } else {
-        cancelAnimationFrame(tableDeckNoticeMeasureFrame);
-        tableSettingsOverlay.style.removeProperty(
-          "--table-deck-notice-height"
+        tableSettingsOverlay.classList.remove(
+          "is-releasing-deck-space"
         );
+        tableSettingsOverlay.classList.add(
+          "has-pending-deck-changes"
+        );
+        tableDeckChangeNotice.hidden = false;
+        tableDeckChangeNotice.classList.remove("is-exiting");
+
+        if (wasHidden) {
+          tableDeckChangeNotice.classList.remove("is-visible");
+          void tableDeckChangeNotice.offsetWidth;
+        }
+
+        tableDeckChangeNotice.classList.add("is-visible");
+        measureTableDeckChangeNotice();
+        return;
       }
+
+      if (
+        immediate ||
+        wasHidden ||
+        !tableSettingsOverlay.classList.contains(
+          "has-pending-deck-changes"
+        )
+      ) {
+        clearTableDeckNoticeImmediately();
+        return;
+      }
+
+      tableDeckChangeNotice.classList.remove("is-visible");
+      tableDeckChangeNotice.classList.add("is-exiting");
+
+      const exitDelay = tableDeckMotionReduced()
+        ? 0
+        : TABLE_DECK_NOTICE_EXIT_MS;
+
+      tableDeckNoticeExitTimer = setTimeout(
+        () => finishTableDeckNoticeExit(token),
+        exitDelay
+      );
     }
 
     function renderTableExpansionControls() {
@@ -13038,11 +13882,18 @@ Content revision v34.19.17:
       syncTableDeckChangeNotice(changed);
     }
 
-    function setTableExpansionPanelOpen(open) {
-      tableExpansionPanel.hidden = !open;
-      tableExpansionPanelToggle.setAttribute(
-        "aria-expanded",
-        String(open)
+    function setTableExpansionPanelOpen(
+      open,
+      { alignToggle = true } = {}
+    ) {
+      setSettingsSubpanelOpen(
+        tableExpansionPanel,
+        tableExpansionPanelToggle,
+        open,
+        {
+          scrollContainer: tableSettingsSheet,
+          alignToggle
+        }
       );
     }
 
@@ -13240,21 +14091,34 @@ Content revision v34.19.17:
     }
 
     function openTableSettings() {
+      if (
+        !tableSettingsOverlay.hidden &&
+        tableSettingsOverlay.classList.contains("is-open") &&
+        !tableSettingsOverlay.classList.contains("is-closing")
+      ) {
+        return;
+      }
+
       pendingTableExpansionIds = [
         ...validExpansionIds(tableState.activePacks)
       ];
       clearTableResetConfirmation();
-      setTableExpansionPanelOpen(false);
+      setTableExpansionPanelOpen(false, {
+        alignToggle: false
+      });
       renderTableExpansionControls();
       renderTableDeckSummary();
       updateWakeLockUi();
       updateInstallAppUi();
 
       rememberModalTrigger(tableSettingsOverlay);
-      tableSettingsOverlay.hidden = false;
-      tableSettingsOverlay.classList.add("is-open");
-      syncModalOpenState();
-      focusInsideModal(tableSettingsOverlay, tableSettingsClose);
+
+      if (openAnimatedSettingsSheet(tableSettingsOverlay)) {
+        focusInsideModal(
+          tableSettingsOverlay,
+          tableSettingsClose
+        );
+      }
     }
 
     function openTableDeckSettings() {
@@ -13266,32 +14130,36 @@ Content revision v34.19.17:
         tableExpansionPanelToggle.focus({
           preventScroll: true
         });
-
-        const reduceMotion = window.matchMedia(
-          "(prefers-reduced-motion: reduce)"
-        ).matches;
-
-        tableExpansionPanelToggle.scrollIntoView({
-          behavior: reduceMotion ? "auto" : "smooth",
-          block: "start",
-          inline: "nearest"
-        });
       });
     }
 
     function closeTableSettings() {
-      if (!tableSettingsOverlay || tableSettingsOverlay.hidden) return;
+      clearSettingsDisclosureScroll(tableSettingsSheet);
+
+      if (
+        !tableSettingsOverlay ||
+        tableSettingsOverlay.hidden ||
+        tableSettingsOverlay.classList.contains("is-closing") ||
+        !tableSettingsOverlay.classList.contains("is-open")
+      ) {
+        return;
+      }
 
       pendingTableExpansionIds = [
         ...validExpansionIds(tableState?.activePacks || [])
       ];
       clearTableResetConfirmation();
-      syncTableDeckChangeNotice(false);
-      tableSettingsOverlay.classList.remove("is-open");
-      tableSettingsOverlay.hidden = true;
-      syncModalOpenState();
-      restoreModalTrigger(tableSettingsOverlay);
+      syncTableDeckChangeNotice(false, { immediate: true });
+
+      if (closeAnimatedSettingsSheet(tableSettingsOverlay)) {
+        restoreModalTrigger(tableSettingsOverlay);
+      }
     }
+
+    enableSettingsSheetSwipeToClose(
+      tableSettingsOverlay,
+      closeTableSettings
+    );
 
     function applyPendingTableDeck() {
       if (sameExpansionIds(
@@ -13307,10 +14175,120 @@ Content revision v34.19.17:
       tableSetStatus("החפיסה הוחלה", 2200);
     }
 
-    function closeModeSelection() {
-      modeSelectOverlay.classList.remove("is-open");
-      modeSelectOverlay.hidden = true;
+    const MODE_SELECTION_MOTION_MS = 280;
+    let modeSelectionOpenFrame = 0;
+    let modeSelectionCloseTimer = 0;
+    let modeSelectionCloseListener = null;
+    let tableAppCloseAfterModeTimer = 0;
+
+    function clearModeSelectionMotion() {
+      cancelAnimationFrame(modeSelectionOpenFrame);
+      clearTimeout(modeSelectionCloseTimer);
+      modeSelectionOpenFrame = 0;
+      modeSelectionCloseTimer = 0;
+
+      if (modeSelectionCloseListener) {
+        modeSelectCard.removeEventListener(
+          "transitionend",
+          modeSelectionCloseListener
+        );
+        modeSelectionCloseListener = null;
+      }
+    }
+
+    function cancelScheduledTableAppClose() {
+      clearTimeout(tableAppCloseAfterModeTimer);
+      tableAppCloseAfterModeTimer = 0;
+    }
+
+    function openModeSelection() {
+      if (
+        !modeSelectOverlay.hidden &&
+        modeSelectOverlay.classList.contains("is-open") &&
+        !modeSelectOverlay.classList.contains("is-closing")
+      ) {
+        return false;
+      }
+
+      clearModeSelectionMotion();
+      modeSelectOverlay.hidden = false;
+      modeSelectOverlay.removeAttribute("inert");
+      modeSelectOverlay.classList.remove("is-closing");
+      modeSelectOverlay.classList.add("is-opening", "is-open");
+      void modeSelectOverlay.offsetWidth;
+
+      const revealModeSelection = () => {
+        modeSelectionOpenFrame = 0;
+
+        if (
+          modeSelectOverlay.classList.contains("is-open") &&
+          !modeSelectOverlay.classList.contains("is-closing")
+        ) {
+          modeSelectOverlay.classList.remove("is-opening");
+        }
+      };
+
+      if (settingsSheetMotionReduced()) {
+        revealModeSelection();
+      } else {
+        modeSelectionOpenFrame = requestAnimationFrame(
+          revealModeSelection
+        );
+      }
+
       syncModalOpenState();
+      return true;
+    }
+
+    function closeModeSelection() {
+      if (
+        modeSelectOverlay.hidden ||
+        modeSelectOverlay.classList.contains("is-closing") ||
+        !modeSelectOverlay.classList.contains("is-open")
+      ) {
+        return false;
+      }
+
+      clearModeSelectionMotion();
+      modeSelectOverlay.classList.remove("is-opening", "is-open");
+      modeSelectOverlay.classList.add("is-closing");
+      modeSelectOverlay.setAttribute("inert", "");
+      syncModalOpenState();
+
+      const finishClose = () => {
+        clearModeSelectionMotion();
+
+        if (!modeSelectOverlay.classList.contains("is-closing")) {
+          return;
+        }
+
+        modeSelectOverlay.hidden = true;
+        modeSelectOverlay.classList.remove("is-closing");
+        modeSelectOverlay.removeAttribute("inert");
+        syncModalOpenState();
+      };
+
+      modeSelectionCloseListener = (event) => {
+        if (
+          event.target === modeSelectCard &&
+          event.propertyName === "transform"
+        ) {
+          finishClose();
+        }
+      };
+      modeSelectCard.addEventListener(
+        "transitionend",
+        modeSelectionCloseListener
+      );
+
+      modeSelectionCloseTimer = setTimeout(
+        finishClose,
+        settingsSheetMotionReduced()
+          ? 0
+          : MODE_SELECTION_MOTION_MS + 80
+      );
+
+      return true;
     }
 
     function closeTableApp() {
@@ -13365,15 +14343,34 @@ Content revision v34.19.17:
     }
 
     function showModeSelection() {
+      cancelScheduledTableAppClose();
+
+      const tableAppWasOpen =
+        !tableAppOverlay.hidden &&
+        tableAppOverlay.classList.contains("is-open");
+
       closeSettings();
       closeTableSettings();
-      closeTableApp();
 
       const quickCompleted = syncModeChooserOnboarding();
 
-      modeSelectOverlay.hidden = false;
-      modeSelectOverlay.classList.add("is-open");
-      syncModalOpenState();
+      openModeSelection();
+
+      if (tableAppWasOpen) {
+        tableAppCloseAfterModeTimer = setTimeout(() => {
+          tableAppCloseAfterModeTimer = 0;
+
+          if (
+            modeSelectOverlay.classList.contains("is-open") &&
+            !modeSelectOverlay.classList.contains("is-closing")
+          ) {
+            closeTableApp();
+          }
+        }, settingsSheetMotionReduced()
+          ? 0
+          : MODE_SELECTION_MOTION_MS);
+      }
+
       focusInsideModal(
         modeSelectOverlay,
         quickCompleted ? modeTableButton : modeQuickButton
@@ -13381,6 +14378,8 @@ Content revision v34.19.17:
     }
 
     function activateModeFromSelection(action, event) {
+      cancelScheduledTableAppClose();
+
       const shouldRequestFullscreen =
         fullscreenOnNextModeChoice &&
         isInstalledPwa() &&
@@ -13417,6 +14416,7 @@ Content revision v34.19.17:
     }
 
     function activateRegularMode() {
+      cancelScheduledTableAppClose();
       closeTableSettings();
       closeModeSelection();
       closeTableApp();
@@ -13431,6 +14431,7 @@ Content revision v34.19.17:
     }
 
     function openTableApp({ quickRound = false } = {}) {
+      cancelScheduledTableAppClose();
       tableQuickRoundActive = Boolean(quickRound);
 
       closeModeSelection();
@@ -14130,7 +15131,9 @@ Content revision v34.19.17:
     );
 
     tableExpansionPanelToggle.addEventListener("click", () => {
-      setTableExpansionPanelOpen(tableExpansionPanel.hidden);
+      setTableExpansionPanelOpen(
+        tableExpansionPanelToggle.getAttribute("aria-expanded") !== "true"
+      );
     });
 
     tableExpansionPackList.addEventListener("click", (event) => {
@@ -14156,12 +15159,13 @@ Content revision v34.19.17:
       renderTableExpansionControls();
     });
 
-    tableApplyDeckChanges.addEventListener(
-      "click",
-      applyPendingTableDeck
-    );
+    tableApplyDeckChanges.addEventListener("click", () => {
+      haptic(16);
+      applyPendingTableDeck();
+    });
 
     tableCancelDeckChanges.addEventListener("click", () => {
+      haptic(10);
       pendingTableExpansionIds = [
         ...validExpansionIds(tableState.activePacks)
       ];
@@ -14257,14 +15261,14 @@ Content revision v34.19.17:
       () => showModeSelection()
     );
     tableCzarDone.addEventListener("click", finishTableCzar);
-    tableChoosePlayer.addEventListener(
-      "click",
-      () => enterTableRole("player")
-    );
-    tableChooseCzar.addEventListener(
-      "click",
-      () => enterTableRole("czar")
-    );
+    tableChoosePlayer.addEventListener("click", () => {
+      haptic(12);
+      enterTableRole("player");
+    });
+    tableChooseCzar.addEventListener("click", () => {
+      haptic(12);
+      enterTableRole("czar");
+    });
 
     function finishTableNameEditing() {
       if (!tableNameEditing) return;
