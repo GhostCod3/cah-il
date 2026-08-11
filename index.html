@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.19.11:
+Content revision v34.19.14:
+- Adds a clear preparing, available and unavailable install-button state
+- Shows the browser installability note only after availability checks finish
+- Pins machine branding, reroll and Choose ② to one lower-right vertical stack
+- Keeps reveal-card number badges above the sticky instruction panel
 - Unifies the install landing and adult-content warning into one opening screen
-- Stacks Choose ② above the machine reroll control and lower-left card branding
+- Stacks Choose ② above the machine reroll control and card branding
 - Restores player-mode headings to the role-selection alignment and typography
 - Adds a matching right-aligned Machine Mode header
-- Restores machine card branding to the lower-left and stacks reroll controls above it
+- Keeps machine card branding and reroll controls in one corner stack
 - Separates the reveal point action from its full-width instruction row
 - Replaces the cramped winner heading with a bottom toast confirmation
 - Enables scrolling only when fullscreen content triggers the safe fallback
@@ -2685,6 +2689,10 @@ Content revision v34.19.11:
       text-align: center;
     }
 
+    .browser-install-feedback[hidden] {
+      display: none !important;
+    }
+
     .content-gate h2 {
       margin: 0;
       color: #fff;
@@ -2953,7 +2961,7 @@ Content revision v34.19.11:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.19.11
+       Offline table game — v34.19.14
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -4635,7 +4643,7 @@ Content revision v34.19.11:
       position: absolute;
       top: 14px;
       left: 14px;
-      z-index: 12;
+      z-index: 42;
       display: grid;
       place-items: center;
       width: 38px;
@@ -5388,7 +5396,7 @@ Content revision v34.19.11:
       }
     }
 
-    /* v34.19.11 — heading parity and stacked lower-left machine card controls */
+    /* v34.19.14 — heading parity and explicit lower-right machine card controls */
     .machine-topbar {
       align-items: flex-start;
       gap: 10px;
@@ -5409,40 +5417,30 @@ Content revision v34.19.11:
       letter-spacing: -.035em;
     }
 
-    body:not(.table-mode-active) .machine-app .card {
-      --machine-control-left: 28px;
-      --machine-reroll-bottom: 56px;
-      --machine-reroll-size: 34px;
-      --machine-control-gap: 8px;
+    .machine-app .card-reroll {
+      top: auto !important;
+      right: 28px !important;
+      bottom: 56px !important;
+      left: auto !important;
     }
 
-    body:not(.table-mode-active) .machine-app .card-reroll {
-      top: auto;
-      right: auto;
-      bottom: var(--machine-reroll-bottom);
-      left: var(--machine-control-left);
-    }
-
-    body:not(.table-mode-active) .machine-app .card .choose-two {
+    .machine-app .card .choose-two {
       position: absolute;
-      z-index: 3;
-      top: auto;
-      right: auto;
-      bottom: calc(
-        var(--machine-reroll-bottom) +
-        var(--machine-reroll-size) +
-        var(--machine-control-gap)
-      );
-      left: var(--machine-control-left);
-      margin: 0;
-      white-space: nowrap;
+      z-index: 4;
+      top: auto !important;
+      right: 28px !important;
+      bottom: 98px !important;
+      left: auto !important;
+      margin: 0 !important;
+      white-space: nowrap !important;
     }
 
-    body:not(.table-mode-active) .machine-app .card .brand {
+    .machine-app .card .brand {
       width: 100%;
       max-width: 100%;
       padding-right: 0;
-      justify-content: flex-end;
+      direction: rtl;
+      justify-content: flex-start;
       white-space: nowrap;
     }
 
@@ -5471,35 +5469,45 @@ Content revision v34.19.11:
         letter-spacing: -.035em;
       }
 
-      body:not(.table-mode-active) .machine-app .card-reroll {
-        top: auto;
-        right: auto;
+      body:not(.fullscreen-game) .machine-app .card-reroll {
+        right: 17px !important;
+        bottom: 38px !important;
+        left: auto !important;
       }
 
-      body:not(.table-mode-active):not(.fullscreen-game)
-        .machine-app .card {
-        --machine-control-left: 17px;
-        --machine-reroll-bottom: 38px;
-        --machine-reroll-size: 30px;
+      body:not(.fullscreen-game) .machine-app .card .choose-two {
+        right: 17px !important;
+        bottom: 76px !important;
+        left: auto !important;
       }
 
-      body.fullscreen-game:not(.table-mode-active) .machine-app .card {
-        --machine-control-left: 17px;
-        --machine-reroll-bottom: 38px;
-        --machine-reroll-size: 34px;
+      body.fullscreen-game .machine-app .card-reroll {
+        right: 17px !important;
+        bottom: 38px !important;
+        left: auto !important;
       }
 
-      body.fullscreen-game.fullscreen-compact:not(.table-mode-active)
-        .machine-app .card {
-        --machine-reroll-bottom: 35px;
-        --machine-reroll-size: 26px;
+      body.fullscreen-game .machine-app .card .choose-two {
+        right: 17px !important;
+        bottom: 80px !important;
+        left: auto !important;
       }
 
-      body.fullscreen-game.fullscreen-compact:not(.table-mode-active)
-        .machine-app .white-hand.is-double .card {
-        --machine-control-left: 11px;
-        --machine-reroll-bottom: 28px;
-        --machine-reroll-size: 23px;
+      body.fullscreen-game.fullscreen-compact
+        .machine-app .card-reroll {
+        bottom: 35px !important;
+      }
+
+      body.fullscreen-game.fullscreen-compact
+        .machine-app .card .choose-two {
+        bottom: 69px !important;
+      }
+
+      body.fullscreen-game.fullscreen-compact
+        .machine-app .white-hand.is-double .card-reroll {
+        right: 11px !important;
+        bottom: 28px !important;
+        left: auto !important;
       }
     }
 
@@ -5583,7 +5591,7 @@ Content revision v34.19.11:
               />
             </svg>
 
-            <span id="browserInstallButtonLabel">התקנה</span>
+            <span id="browserInstallButtonLabel">מכין התקנה...</span>
           </span>
         </button>
 
@@ -5622,7 +5630,8 @@ Content revision v34.19.11:
         id="browserInstallFeedback"
         class="browser-install-feedback"
         aria-live="polite"
-      >ההתקנה זמינה רק כאשר הדפדפן מאשר שהאתר ניתן להתקנה.</p>
+        hidden
+      ></p>
     </section>
   </div>
 
@@ -6314,7 +6323,7 @@ Content revision v34.19.11:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.19.11 · 1,183 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.19.14 · 1,183 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -6440,7 +6449,7 @@ Content revision v34.19.11:
       </div>
 
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.19.11</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.19.14</strong><br>
         המשחק והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -9440,11 +9449,14 @@ Content revision v34.19.11:
     let fullscreenOnNextModeChoice = false;
     let deferredInstallPrompt = null;
     let browserInstallFeedbackTimer = null;
+    let browserInstallAvailabilityTimer = null;
+    let browserInstallPromptTimedOut = false;
     let browserInstallPhase = "idle";
     let browserInstallStartedAt = 0;
     let browserInstallCompletionTimer = null;
     let browserInstallContinueTimer = null;
     const MIN_BROWSER_INSTALL_PROGRESS_MS = 5000;
+    const BROWSER_INSTALL_WAIT_MS = 3500;
     const PWA_CONTENT_WARNING_ACCEPTED_KEY =
       "cah-pwa-content-warning-accepted-v1";
     const BROWSER_INSTALL_AVAILABILITY_NOTE =
@@ -9881,16 +9893,69 @@ Content revision v34.19.11:
     }
 
     function clearBrowserInstallTimers() {
+      clearTimeout(browserInstallAvailabilityTimer);
       clearTimeout(browserInstallCompletionTimer);
       clearTimeout(browserInstallContinueTimer);
+      browserInstallAvailabilityTimer = null;
       browserInstallCompletionTimer = null;
       browserInstallContinueTimer = null;
     }
 
+    function setBrowserInstallFeedback(message = "") {
+      clearTimeout(browserInstallFeedbackTimer);
+      browserInstallFeedbackTimer = null;
+
+      const copy = String(message || "");
+      browserInstallFeedback.textContent = copy;
+      browserInstallFeedback.hidden = !copy;
+    }
+
+    function showBrowserInstallUnavailable() {
+      if (
+        isInstalledPwa() ||
+        deferredInstallPrompt ||
+        browserInstallPhase !== "idle"
+      ) {
+        return;
+      }
+
+      browserInstallPromptTimedOut = true;
+      updateInstallAppUi();
+      setBrowserInstallFeedback(
+        BROWSER_INSTALL_AVAILABILITY_NOTE
+      );
+    }
+
+    function scheduleBrowserInstallAvailabilityCheck() {
+      clearTimeout(browserInstallAvailabilityTimer);
+      browserInstallAvailabilityTimer = null;
+
+      if (
+        isInstalledPwa() ||
+        deferredInstallPrompt ||
+        browserInstallPhase !== "idle"
+      ) {
+        return;
+      }
+
+      browserInstallPromptTimedOut = false;
+      setBrowserInstallFeedback();
+      updateInstallAppUi();
+
+      browserInstallAvailabilityTimer = setTimeout(() => {
+        browserInstallAvailabilityTimer = null;
+        showBrowserInstallUnavailable();
+      }, BROWSER_INSTALL_WAIT_MS);
+    }
+
     function resetBrowserInstallLanding(message = "") {
       clearBrowserInstallTimers();
+      clearTimeout(browserInstallFeedbackTimer);
       browserInstallPhase = "idle";
       browserInstallStartedAt = 0;
+      browserInstallPromptTimedOut = Boolean(
+        !isInstalledPwa() && !deferredInstallPrompt
+      );
 
       browserInstallButton.classList.remove(
         "is-installing",
@@ -9904,15 +9969,28 @@ Content revision v34.19.11:
       browserContinueButton.hidden = false;
       browserContinueButton.textContent =
         "המשך לגרסת האתר";
-      browserInstallFeedback.textContent =
-        message || BROWSER_INSTALL_AVAILABILITY_NOTE;
 
       if (message) {
-        clearTimeout(browserInstallFeedbackTimer);
+        setBrowserInstallFeedback(message);
         browserInstallFeedbackTimer = setTimeout(() => {
-          browserInstallFeedback.textContent =
-            BROWSER_INSTALL_AVAILABILITY_NOTE;
+          browserInstallFeedbackTimer = null;
+
+          if (
+            !isInstalledPwa() &&
+            !deferredInstallPrompt &&
+            browserInstallPhase === "idle"
+          ) {
+            showBrowserInstallUnavailable();
+          } else {
+            setBrowserInstallFeedback();
+          }
         }, 2200);
+      } else if (browserInstallPromptTimedOut) {
+        setBrowserInstallFeedback(
+          BROWSER_INSTALL_AVAILABILITY_NOTE
+        );
+      } else {
+        setBrowserInstallFeedback();
       }
 
       updateInstallAppUi();
@@ -9924,10 +10002,10 @@ Content revision v34.19.11:
       }
 
       clearBrowserInstallTimers();
-      clearTimeout(browserInstallFeedbackTimer);
+      setBrowserInstallFeedback();
+      browserInstallPromptTimedOut = false;
       browserInstallPhase = "installing";
       browserInstallStartedAt = Date.now();
-      browserInstallFeedback.textContent = "";
       browserInstallButton.classList.remove("is-complete");
       browserInstallButton.classList.add("is-installing");
       browserInstallButton.setAttribute("aria-busy", "true");
@@ -9956,7 +10034,7 @@ Content revision v34.19.11:
       browserInstallSuccessArrow.hidden = false;
       browserInstallWait.hidden = true;
       browserInstallSuccessCopy.hidden = false;
-      browserInstallFeedback.textContent = "";
+      setBrowserInstallFeedback();
       haptic(26);
 
       browserInstallContinueTimer = setTimeout(() => {
@@ -10015,7 +10093,11 @@ Content revision v34.19.11:
             installed || !available;
           browserInstallButtonLabel.textContent = installed
             ? "מותקן"
-            : "התקנה";
+            : available
+              ? "התקנה"
+              : browserInstallPromptTimedOut
+                ? "התקנה לא זמינה"
+                : "מכין התקנה...";
           browserInstallIcon.hidden = false;
           browserInstallSuccessArrow.hidden = true;
         } else {
@@ -10047,12 +10129,20 @@ Content revision v34.19.11:
 
     function showInstallFeedback(message, duration = 2600) {
       if (browserInstallGate && !browserInstallGate.hidden) {
-        clearTimeout(browserInstallFeedbackTimer);
-        browserInstallFeedback.textContent = message;
+        setBrowserInstallFeedback(message);
 
         browserInstallFeedbackTimer = setTimeout(() => {
-          browserInstallFeedback.textContent =
-            BROWSER_INSTALL_AVAILABILITY_NOTE;
+          browserInstallFeedbackTimer = null;
+
+          if (
+            !isInstalledPwa() &&
+            !deferredInstallPrompt &&
+            browserInstallPhase === "idle"
+          ) {
+            showBrowserInstallUnavailable();
+          } else {
+            setBrowserInstallFeedback();
+          }
         }, duration);
         return;
       }
@@ -10151,7 +10241,15 @@ Content revision v34.19.11:
 
     window.addEventListener("beforeinstallprompt", (event) => {
       event.preventDefault();
+      clearTimeout(browserInstallAvailabilityTimer);
+      browserInstallAvailabilityTimer = null;
+      browserInstallPromptTimedOut = false;
       deferredInstallPrompt = event;
+
+      if (browserInstallPhase === "idle") {
+        setBrowserInstallFeedback();
+      }
+
       updateInstallAppUi();
 
       if (
@@ -10164,6 +10262,9 @@ Content revision v34.19.11:
     });
 
     window.addEventListener("appinstalled", () => {
+      clearTimeout(browserInstallAvailabilityTimer);
+      browserInstallAvailabilityTimer = null;
+      browserInstallPromptTimedOut = false;
       deferredInstallPrompt = null;
 
       if (
@@ -10174,6 +10275,7 @@ Content revision v34.19.11:
         return;
       }
 
+      setBrowserInstallFeedback();
       updateInstallAppUi();
       setStatus(
         "המשחק הותקן בהצלחה",
@@ -10590,7 +10692,16 @@ Content revision v34.19.11:
       browserInstallGate.hidden = false;
       document.body.classList.add("content-gate-open");
       setGameBackgroundInert(true);
-      updateInstallAppUi();
+
+      if (
+        browserInstallPhase === "idle" &&
+        !isInstalledPwa() &&
+        !deferredInstallPrompt
+      ) {
+        scheduleBrowserInstallAvailabilityCheck();
+      } else {
+        updateInstallAppUi();
+      }
 
       requestAnimationFrame(() => {
         const focusTarget =
@@ -10631,6 +10742,8 @@ Content revision v34.19.11:
     }
 
     function closeOpeningGate() {
+      clearTimeout(browserInstallAvailabilityTimer);
+      browserInstallAvailabilityTimer = null;
       browserInstallGate.hidden = true;
       document.body.classList.remove("content-gate-open");
       setGameBackgroundInert(false);
@@ -12609,7 +12722,7 @@ Content revision v34.19.11:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.19.11 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.19.14 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
