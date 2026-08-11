@@ -1,6 +1,6 @@
-const STATIC_CACHE = "cah-il-static-v34.19.14";
-const RUNTIME_CACHE = "cah-il-runtime-v34.19.14";
-const FONT_CACHE = "cah-il-fonts-v34.19.14";
+const STATIC_CACHE = "cah-il-static-v34.19.17";
+const RUNTIME_CACHE = "cah-il-runtime-v34.19.17";
+const FONT_CACHE = "cah-il-fonts-v34.19.17";
 
 const APP_SHELL = [
   "./",

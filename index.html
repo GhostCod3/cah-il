@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <!--
-Content revision v34.19.14:
+Content revision v34.19.17:
+- Keeps pending friends-deck changes visible in a floating confirmation bar
+- Reserves dynamic scroll space so the confirmation bar covers no menu content
+- Highlights unapplied pack selections and confirms successful deck changes
+- Centers both Pick ② white-card reroll controls without changing their height
+- Anchors solo toast notifications exactly 5px below the New Round control
+- Moves card browsing into the bottom of both active-pack panels
+- Removes the duplicated pack-count summaries beneath the final expansion
+- Prevents false fullscreen fallbacks from inflating solo cards between rounds
+- Measures real card-text overlap instead of counting absolutely positioned controls
+- Keeps reroll controls compact inside the genuine fullscreen fallback
+- Moves only the left Pick ② white-card reroll to that card's outer-left edge
 - Adds a clear preparing, available and unavailable install-button state
 - Shows the browser installability note only after availability checks finish
 - Pins machine branding, reroll and Choose ② to one lower-right vertical stack
@@ -1657,7 +1668,6 @@ Content revision v34.19.14:
     .expansion-pack:active:not([aria-disabled="true"]) { transform: scale(.992); }
     .expansion-pack[aria-disabled="true"] { cursor: default; }
     .expansion-pack-base-state { min-width: 82px; padding: 6px 9px; border: 1px solid #484848; border-radius: 999px; background: #303030; color: #d2d2ce; font-size: .7rem; font-weight: 700; text-align: center; white-space: nowrap; }
-    .expansion-summary { margin: 4px 4px 0; color: #bdbdbd; font-size: .76rem; line-height: 1.4; text-align: center; }
     .expansion-quick-actions { position: sticky; top: 0; z-index: 4; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 0 9px; background: linear-gradient(to bottom,#171717 0%,#171717 76%,rgba(23,23,23,0) 100%); }
     .expansion-quick-button { min-height: 44px; padding: 9px 10px; background: #202020; color: #e6e6e6; border: 1px solid #383838; font-size: .82rem; }
     .expansion-quick-button[aria-pressed="true"] { border-color: #f5f5f1; background: #f5f5f1; color: #111; box-shadow: 0 7px 20px rgba(0,0,0,.24); }
@@ -2961,7 +2971,7 @@ Content revision v34.19.14:
 
 
     /* ------------------------------------------------------------------
-       Offline table game — v34.19.14
+       Offline table game — v34.19.17
        ------------------------------------------------------------------ */
     body.table-mode-active {
       overflow: hidden;
@@ -3763,19 +3773,69 @@ Content revision v34.19.14:
       display: none !important;
     }
 
+    .table-settings-overlay {
+      --table-deck-notice-height: 156px;
+    }
+
+    .table-settings-overlay .settings-sheet {
+      transition: padding-bottom .2s ease;
+    }
+
+    .table-settings-overlay.has-pending-deck-changes .settings-sheet {
+      padding-bottom: calc(
+        34px + var(--table-deck-notice-height) +
+        env(safe-area-inset-bottom)
+      );
+      scroll-padding-bottom: calc(
+        24px + var(--table-deck-notice-height)
+      );
+    }
+
+    #tableExpansionPanelToggle.has-pending-deck-changes {
+      border-color: #887447;
+      background: rgba(132,104,49,.13);
+    }
+
+    #tableExpansionPanelToggle.has-pending-deck-changes
+      .settings-action-meta {
+      color: #e4cd93;
+    }
+
     .table-deck-change-notice {
-      margin-top: 12px;
-      padding: 13px;
-      border: 1px solid #5a5140;
-      border-radius: 14px;
-      background: rgba(132,104,49,.12);
+      position: fixed;
+      z-index: 12;
+      left: 50%;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      width: min(calc(100vw - 48px), 528px);
+      margin: 0;
+      padding: 14px;
+      transform: translateX(-50%);
+      border: 1px solid #887447;
+      border-radius: 17px;
+      background: rgba(31,28,21,.97);
+      box-shadow: 0 16px 44px rgba(0,0,0,.58);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      animation: tableDeckChangeNoticeIn .22s ease-out both;
+    }
+
+    .table-deck-change-notice[hidden] {
+      display: none !important;
+    }
+
+    .table-deck-change-notice strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #f5f0e4;
+      font-size: .92rem;
+      line-height: 1.35;
     }
 
     .table-deck-change-notice p {
       margin: 0;
-      color: #ded5c2;
-      font-size: .82rem;
-      line-height: 1.48;
+      color: #d5cbb7;
+      font-size: .79rem;
+      line-height: 1.42;
     }
 
     .table-deck-change-actions {
@@ -3783,6 +3843,43 @@ Content revision v34.19.14:
       grid-template-columns: 1fr 1fr;
       gap: 8px;
       margin-top: 11px;
+    }
+
+    .table-deck-change-actions .expansion-quick-button {
+      min-height: 46px;
+      font-weight: 760;
+    }
+
+    .table-deck-apply {
+      border-color: #f5f5f1;
+      background: #f5f5f1;
+      color: #111;
+    }
+
+    .table-deck-cancel {
+      background: #242424;
+      color: #ddd;
+    }
+
+    @keyframes tableDeckChangeNoticeIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, 16px);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .table-settings-overlay .settings-sheet {
+        transition: none;
+      }
+
+      .table-deck-change-notice {
+        animation: none;
+      }
     }
 
     .table-reset-action.is-confirming {
@@ -5396,7 +5493,7 @@ Content revision v34.19.14:
       }
     }
 
-    /* v34.19.14 — heading parity and explicit lower-right machine card controls */
+    /* Stable solo sizing and centered Pick ② rerolls */
     .machine-topbar {
       align-items: flex-start;
       gap: 10px;
@@ -5505,9 +5602,43 @@ Content revision v34.19.14:
 
       body.fullscreen-game.fullscreen-compact
         .machine-app .white-hand.is-double .card-reroll {
-        right: 11px !important;
         bottom: 28px !important;
-        left: auto !important;
+      }
+
+      /* Center each Pick ② reroll inside its own card at the existing height. */
+      .machine-app .white-hand.is-double .card-reroll {
+        right: auto !important;
+        left: 50% !important;
+        translate: -50% 0;
+      }
+
+      /* A true overflow fallback must not enlarge the small card controls. */
+      body.fullscreen-game.fullscreen-scroll-fallback
+        .machine-app .card-reroll {
+        width: 26px !important;
+        min-width: 26px !important;
+        height: 26px !important;
+        min-height: 26px !important;
+      }
+
+      body.fullscreen-game.fullscreen-scroll-fallback
+        .machine-app .card-reroll svg {
+        width: 14px !important;
+        height: 14px !important;
+      }
+
+      body.fullscreen-game.fullscreen-scroll-fallback
+        .machine-app .white-hand.is-double .card-reroll {
+        width: 23px !important;
+        min-width: 23px !important;
+        height: 23px !important;
+        min-height: 23px !important;
+      }
+
+      body.fullscreen-game.fullscreen-scroll-fallback
+        .machine-app .white-hand.is-double .card-reroll svg {
+        width: 12px !important;
+        height: 12px !important;
       }
     }
 
@@ -6305,25 +6436,23 @@ Content revision v34.19.14:
               <button id="allPacks" class="expansion-quick-button" type="button" aria-pressed="false">כל ההרחבות</button>
             </div>
             <div id="expansionPackList" class="expansion-pack-list" aria-label="בחירת חבילות הרחבה"></div>
-            <p id="expansionSummary" class="expansion-summary"></p>
+            <button
+              id="openCardBrowser"
+              class="settings-action settings-action-split card-browser-menu-action"
+              type="button"
+              data-close-settings="true"
+            >
+              <span class="settings-action-title">עיון בקלפים</span>
+              <span id="cardBrowserSummary" class="settings-action-count"></span>
+            </button>
           </div>
-
-          <button
-            id="openCardBrowser"
-            class="settings-action settings-action-split card-browser-menu-action"
-            type="button"
-            data-close-settings="true"
-          >
-            <span class="settings-action-title">עיון בקלפים</span>
-            <span id="cardBrowserSummary" class="settings-action-count"></span>
-          </button>
 
         </section>
 
       </div>
 
       <footer class="settings-menu-footer">
-        <strong>גרסה 34.19.14 · 1,183 קלפים בחפיסה המלאה</strong><br>
+        <strong>גרסה 34.19.17 · 1,183 קלפים בחפיסה המלאה</strong><br>
         ההתקדמות והעריכות נשמרות במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -6414,27 +6543,12 @@ Content revision v34.19.14:
               <button id="tableAllPacks" class="expansion-quick-button" type="button" aria-pressed="false">כל ההרחבות</button>
             </div>
             <div id="tableExpansionPackList" class="expansion-pack-list" aria-label="בחירת חבילות למשחק נגד חברים"></div>
-            <p id="tableExpansionSummary" class="expansion-summary"></p>
 
-            <div id="tableDeckChangeNotice" class="table-deck-change-notice" hidden>
-              <p>
-                שינוי החבילות יאפס את היד ואת הקלפים שכבר נשלפו. השם והניקוד יישמרו.
-              </p>
-              <div class="table-deck-change-actions">
-                <button id="tableApplyDeckChanges" class="expansion-quick-button" type="button">
-                  החל חפיסה
-                </button>
-                <button id="tableCancelDeckChanges" class="expansion-quick-button" type="button">
-                  ביטול
-                </button>
-              </div>
-            </div>
+            <button id="tableOpenCardBrowser" class="settings-action settings-action-split card-browser-menu-action" type="button">
+              <span class="settings-action-title">עיון בקלפים</span>
+              <span id="tableCardBrowserSummary" class="settings-action-count"></span>
+            </button>
           </div>
-
-          <button id="tableOpenCardBrowser" class="settings-action settings-action-split card-browser-menu-action" type="button">
-            <span class="settings-action-title">עיון בקלפים</span>
-            <span id="tableCardBrowserSummary" class="settings-action-count"></span>
-          </button>
 
         </section>
 
@@ -6448,8 +6562,30 @@ Content revision v34.19.14:
         </section>
       </div>
 
+      <div
+        id="tableDeckChangeNotice"
+        class="table-deck-change-notice"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        hidden
+      >
+        <strong>⚠ יש שינויים שלא הוחלו</strong>
+        <p>
+          החלת החפיסה תאפס את היד והקלפים שנשלפו. השם והניקוד יישמרו.
+        </p>
+        <div class="table-deck-change-actions">
+          <button id="tableApplyDeckChanges" class="expansion-quick-button table-deck-apply" type="button">
+            החל חפיסה
+          </button>
+          <button id="tableCancelDeckChanges" class="expansion-quick-button table-deck-cancel" type="button">
+            ביטול שינויים
+          </button>
+        </div>
+      </div>
+
       <footer class="settings-menu-footer">
-        <strong id="tableSettingsFooterSummary">גרסה 34.19.14</strong><br>
+        <strong id="tableSettingsFooterSummary">גרסה 34.19.17</strong><br>
         המשחק והחפיסה נשמרים במכשיר בלבד · זמין גם ללא אינטרנט
       </footer>
     </section>
@@ -9342,8 +9478,52 @@ Content revision v34.19.14:
     function setStatus(message, duration = 1800) {
       const el = document.getElementById("status");
       el.textContent = message;
+
+      positionSoloStatusToast();
+
+      requestAnimationFrame(() => {
+        if (el.textContent === message) positionSoloStatusToast();
+      });
+
+      clearTimeout(window.statusPositionTimer);
+      window.statusPositionTimer = setTimeout(() => {
+        if (el.textContent === message) positionSoloStatusToast();
+      }, 120);
+
       clearTimeout(window.statusTimer);
       window.statusTimer = setTimeout(() => el.textContent = "", duration);
+    }
+
+    function positionSoloStatusToast() {
+      const el = document.getElementById("status");
+      const button = document.getElementById("roundActionButton");
+      const isMobileSolo =
+        window.innerWidth <= 760 &&
+        !document.body.classList.contains("table-mode-active");
+
+      if (!el || !button || !isMobileSolo) {
+        el?.style.removeProperty("top");
+        el?.style.removeProperty("bottom");
+        return;
+      }
+
+      if (!el.textContent) return;
+
+      const buttonRect = button.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const viewportTop = viewport?.offsetTop || 0;
+      const viewportHeight = viewport?.height || window.innerHeight;
+      const minimumTop = viewportTop + 5;
+      const maximumTop = Math.max(
+        minimumTop,
+        viewportTop + viewportHeight - el.offsetHeight - 5
+      );
+      const desiredTop = buttonRect.bottom + 5;
+
+      el.style.top = `${Math.round(
+        Math.min(maximumTop, Math.max(minimumTop, desiredTop))
+      )}px`;
+      el.style.bottom = "auto";
     }
 
 
@@ -9355,7 +9535,6 @@ Content revision v34.19.14:
     const settingsOverlay = document.getElementById("settingsOverlay");
     const settingsClose = document.getElementById("settingsClose");
     const expansionPackList = document.getElementById("expansionPackList");
-    const expansionSummary = document.getElementById("expansionSummary");
     const expansionMenuSummary = document.getElementById("expansionMenuSummary");
     const expansionPanelToggle = document.getElementById("expansionPanelToggle");
     const expansionPanel = document.getElementById("expansionPanel");
@@ -9427,7 +9606,6 @@ Content revision v34.19.14:
     const tableBaseOnlyPacks = document.getElementById("tableBaseOnlyPacks");
     const tableAllPacks = document.getElementById("tableAllPacks");
     const tableExpansionMenuSummary = document.getElementById("tableExpansionMenuSummary");
-    const tableExpansionSummary = document.getElementById("tableExpansionSummary");
     const tableDeckChangeNotice = document.getElementById("tableDeckChangeNotice");
     const tableApplyDeckChanges = document.getElementById("tableApplyDeckChanges");
     const tableCancelDeckChanges = document.getElementById("tableCancelDeckChanges");
@@ -10409,10 +10587,6 @@ Content revision v34.19.14:
       updateWakeLockUi();
     }
 
-    function packCardCount(pack) {
-      return pack.blackCards.length + pack.whiteCards.length;
-    }
-
     function plannedPackCardCount(pack) {
       return pack.plannedBlackCount + pack.plannedWhiteCount;
     }
@@ -10459,10 +10633,6 @@ Content revision v34.19.14:
 
       const available = availableExpansionPacks();
       const active = activeExpansionPacks();
-      const activeExtraCount = active.reduce(
-        (sum, pack) => sum + packCardCount(pack),
-        0
-      );
 
       expansionQuickActions.hidden = available.length === 0;
       baseOnlyPacks.setAttribute("aria-pressed", String(active.length === 0));
@@ -10480,9 +10650,6 @@ Content revision v34.19.14:
           : `חבילת הבסיס · ${totalActiveCards} קלפים`;
       }
 
-      expansionSummary.textContent = available.length
-        ? `${totalActiveCards} קלפים · ${blackCards.length} שחורים · ${whiteCards.length} לבנים`
-        : `${totalActiveCards} קלפים פעילים`;
     }
 
     function applyActiveExpansionIds(ids, message) {
@@ -11586,9 +11753,7 @@ Content revision v34.19.14:
       if (!text) return true;
 
       text.style.fontSize = "";
-      const measurement = cardContentHeight(card);
-
-      return measurement.used <= measurement.available + 1;
+      return cardContentFitsWithoutOverlap(card);
     }
 
     function currentHandVisibleEnough() {
@@ -11749,6 +11914,7 @@ Content revision v34.19.14:
       setRoundActionState(
         roundHandVisible ? "white" : currentCardSection
       );
+      positionSoloStatusToast();
     }
 
     function scheduleAdaptiveLayout(options = {}) {
@@ -11774,37 +11940,78 @@ Content revision v34.19.14:
       ].filter((card) => card && !card.hidden);
     }
 
-    function cardContentHeight(card) {
-      const styles = getComputedStyle(card);
-      const padding =
-        parseFloat(styles.paddingTop) +
-        parseFloat(styles.paddingBottom);
-
-      const text = card.querySelector(".card-text");
-      const brand = card.querySelector(".brand");
-      const badge = card.querySelector(".choose-two:not([hidden])");
-      const reroll = card.querySelector(".card-reroll");
-      const controlSpacing = badge ? 24 : 16;
-
-      return {
-        available: card.clientHeight - padding,
-        used:
-          (text?.scrollHeight || 0) +
-          (brand?.offsetHeight || 0) +
-          (reroll?.offsetHeight || 0) +
-          (badge?.offsetHeight || 0) +
-          controlSpacing
-      };
-    }
-
-    function fitCardTextForFullscreen(card) {
+    function cardContentFitsWithoutOverlap(card) {
       const text = card.querySelector(".card-text");
       if (!text) return true;
 
       text.style.fontSize = "";
-      const measurement = cardContentHeight(card);
 
-      return measurement.used <= measurement.available + 1;
+      const cardRect = card.getBoundingClientRect();
+
+      if (!cardRect.width || !cardRect.height) {
+        return true;
+      }
+
+      const textRect = text.getBoundingClientRect();
+      const brand = card.querySelector(".brand");
+      const brandRect = brand?.getBoundingClientRect();
+      const controls = [
+        card.querySelector(".choose-two:not([hidden])"),
+        card.querySelector(".card-reroll")
+      ].filter(Boolean);
+      const styles = getComputedStyle(card);
+      const tolerance = 3;
+      const innerTop =
+        cardRect.top + (parseFloat(styles.paddingTop) || 0);
+      const innerRight =
+        cardRect.right - (parseFloat(styles.paddingRight) || 0);
+      const innerBottom =
+        cardRect.bottom - (parseFloat(styles.paddingBottom) || 0);
+      const innerLeft =
+        cardRect.left + (parseFloat(styles.paddingLeft) || 0);
+      const textOverflowsOwnBox =
+        text.scrollHeight > text.clientHeight + tolerance ||
+        text.scrollWidth > text.clientWidth + tolerance;
+      const textLeavesCard =
+        textRect.top < innerTop - tolerance ||
+        textRect.right > innerRight + tolerance ||
+        textRect.bottom > innerBottom + tolerance ||
+        textRect.left < innerLeft - tolerance;
+
+      function rectanglesOverlap(first, second, gap = 0) {
+        return !(
+          first.right + gap <= second.left ||
+          first.left >= second.right + gap ||
+          first.bottom + gap <= second.top ||
+          first.top >= second.bottom + gap
+        );
+      }
+
+      const textHitsLowerContent = [
+        brandRect,
+        ...controls.map((control) =>
+          control.getBoundingClientRect()
+        )
+      ]
+        .filter(Boolean)
+        .some((rect) =>
+          rectanglesOverlap(textRect, rect, 4)
+        );
+
+      const brandLeavesCard = Boolean(
+        brandRect && (
+          brandRect.right > innerRight + tolerance ||
+          brandRect.bottom > innerBottom + tolerance ||
+          brandRect.left < innerLeft - tolerance
+        )
+      );
+
+      return !(
+        textOverflowsOwnBox ||
+        textLeavesCard ||
+        textHitsLowerContent ||
+        brandLeavesCard
+      );
     }
 
     function clearFullscreenTextOverrides() {
@@ -11814,14 +12021,14 @@ Content revision v34.19.14:
       });
     }
 
-    function fullscreenBoxFits(element) {
+    function fullscreenBoxFits(element, tolerance = 6) {
       if (!element || !element.clientWidth || !element.clientHeight) {
         return true;
       }
 
       return (
-        element.scrollHeight <= element.clientHeight + 1 &&
-        element.scrollWidth <= element.clientWidth + 1
+        element.scrollHeight <= element.clientHeight + tolerance &&
+        element.scrollWidth <= element.clientWidth + tolerance
       );
     }
 
@@ -11831,13 +12038,14 @@ Content revision v34.19.14:
         gameBoard,
         blackPanel,
         whitePanel,
-        document.getElementById("whiteHand"),
-        ...cards
+        document.getElementById("whiteHand")
       ];
 
       return (
-        cards.every(fitCardTextForFullscreen) &&
-        constrainedBoxes.every(fullscreenBoxFits)
+        cards.every(cardContentFitsWithoutOverlap) &&
+        constrainedBoxes.every((element) =>
+          fullscreenBoxFits(element)
+        )
       );
     }
 
@@ -11869,11 +12077,15 @@ Content revision v34.19.14:
         setFullscreenScrollFallback(false);
         clearFullscreenTextOverrides();
         setRoundActionState(currentCardSection);
+        positionSoloStatusToast();
         return;
       }
 
       document.body.classList.add("fullscreen-compact");
       setFullscreenScrollFallback(false);
+      clearTimeout(adaptiveResizeTimer);
+      adaptiveLayoutToken += 1;
+      clearAdaptiveCardOverrides();
       clearFullscreenTextOverrides();
 
       await nextPaint();
@@ -11913,6 +12125,7 @@ Content revision v34.19.14:
       }
 
       setRoundActionState("black");
+      positionSoloStatusToast();
     }
 
     function panelTopPosition(panel) {
@@ -12692,6 +12905,7 @@ Content revision v34.19.14:
     let pendingTableExpansionIds = [];
     let tableResetArmed = false;
     let tableResetTimer = 0;
+    let tableDeckNoticeMeasureFrame = 0;
 
     function sortedExpansionIds(ids) {
       return validExpansionIds(ids).sort();
@@ -12722,7 +12936,7 @@ Content revision v34.19.14:
       tableCardBrowserSummary.textContent =
         `${metrics.black} שחורים · ${metrics.white} לבנים`;
       tableSettingsFooterSummary.textContent =
-        `גרסה 34.19.14 · ${metrics.total} קלפים פעילים`;
+        `גרסה 34.19.17 · ${metrics.total} קלפים פעילים`;
     }
 
     function createTableExpansionPackButton(pack, options = {}) {
@@ -12738,6 +12952,48 @@ Content revision v34.19.14:
       const meta=document.createElement("span");meta.className="expansion-pack-meta";meta.textContent=isBase ? `${baseBlackCards.length} שחורים · ${baseWhiteCards.length} לבנים` : hasCards ? `${pack.blackCards.length} שחורים · ${pack.whiteCards.length} לבנים` : `${plannedPackCardCount(pack)} קלפים מתוכננים`;
       const state=document.createElement("span");state.setAttribute("aria-hidden","true");state.className=isBase ? "expansion-pack-base-state" : "expansion-pack-state";if(isBase)state.textContent="כלולה תמיד";
       copy.append(name,meta);button.append(copy,state);return button;
+    }
+
+    function measureTableDeckChangeNotice() {
+      cancelAnimationFrame(tableDeckNoticeMeasureFrame);
+
+      if (tableDeckChangeNotice.hidden) return;
+
+      tableDeckNoticeMeasureFrame = requestAnimationFrame(() => {
+        const height = Math.ceil(
+          tableDeckChangeNotice.getBoundingClientRect().height ||
+          tableDeckChangeNotice.offsetHeight
+        );
+
+        if (height > 0) {
+          tableSettingsOverlay.style.setProperty(
+            "--table-deck-notice-height",
+            `${height}px`
+          );
+        }
+      });
+    }
+
+    function syncTableDeckChangeNotice(changed) {
+      tableDeckChangeNotice.hidden = !changed;
+      tableApplyDeckChanges.disabled = !changed;
+      tableSettingsOverlay.classList.toggle(
+        "has-pending-deck-changes",
+        changed
+      );
+      tableExpansionPanelToggle.classList.toggle(
+        "has-pending-deck-changes",
+        changed
+      );
+
+      if (changed) {
+        measureTableDeckChangeNotice();
+      } else {
+        cancelAnimationFrame(tableDeckNoticeMeasureFrame);
+        tableSettingsOverlay.style.removeProperty(
+          "--table-deck-notice-height"
+        );
+      }
     }
 
     function renderTableExpansionControls() {
@@ -12776,12 +13032,10 @@ Content revision v34.19.14:
       tableExpansionQuickActions.hidden = available.length === 0;
       tableBaseOnlyPacks.setAttribute("aria-pressed", String(pendingTableExpansionIds.length === 0));
       tableAllPacks.setAttribute("aria-pressed", String(available.length > 0 && pendingTableExpansionIds.length === available.length));
-      tableExpansionMenuSummary.textContent =
-        `${label} · ${metrics.total} קלפים`;
-      tableExpansionSummary.textContent =
-        `${metrics.total} קלפים · ${metrics.black} שחורים · ${metrics.white} לבנים`;
-      tableDeckChangeNotice.hidden = !changed;
-      tableApplyDeckChanges.disabled = !changed;
+      tableExpansionMenuSummary.textContent = changed
+        ? `שינויים ממתינים · ${metrics.total} קלפים`
+        : `${label} · ${metrics.total} קלפים`;
+      syncTableDeckChangeNotice(changed);
     }
 
     function setTableExpansionPanelOpen(open) {
@@ -13032,6 +13286,7 @@ Content revision v34.19.14:
         ...validExpansionIds(tableState?.activePacks || [])
       ];
       clearTableResetConfirmation();
+      syncTableDeckChangeNotice(false);
       tableSettingsOverlay.classList.remove("is-open");
       tableSettingsOverlay.hidden = true;
       syncModalOpenState();
@@ -13049,7 +13304,7 @@ Content revision v34.19.14:
         { preserveScore: true }
       );
       closeTableSettings();
-      tableSetStatus("החפיסה הפעילה עודכנה והיד חולקה מחדש", 2800);
+      tableSetStatus("החפיסה הוחלה", 2200);
     }
 
     function closeModeSelection() {
@@ -13861,6 +14116,18 @@ Content revision v34.19.14:
         closeTableSettings();
       }
     });
+
+    window.addEventListener(
+      "resize",
+      measureTableDeckChangeNotice,
+      { passive: true }
+    );
+
+    window.visualViewport?.addEventListener(
+      "resize",
+      measureTableDeckChangeNotice,
+      { passive: true }
+    );
 
     tableExpansionPanelToggle.addEventListener("click", () => {
       setTableExpansionPanelOpen(tableExpansionPanel.hidden);
